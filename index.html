@@ -123,7 +123,7 @@ select.inp{-webkit-appearance:none;appearance:none}
   <div class="nav-item" onclick="goPage(4)">💵 ส่งเงิน</div>
   <div class="nav-item" onclick="goPage(5)">👥 กะ</div>
   <div class="nav-item" onclick="goPage(6)">⚠️ สูญเสีย</div>
-  <div class="nav-item" onclick="goPage(7)">🚫 Void</div>
+  <div class="nav-item" onclick="goPage(7)">🚫 ยกเลิกบิล</div>
   <div class="nav-item" onclick="goPage(8)">📤 Export</div>
 </div>
 
@@ -187,6 +187,10 @@ select.inp{-webkit-appearance:none;appearance:none}
   <div class="slabel">2. EDC — เครื่องรูดบัตร</div>
   <div class="card">
     <div class="field">
+      <div class="lbl">EDC1 — ยอด EDC POS</div>
+      <input class="inp inp-r" type="number" inputmode="numeric" id="edc-pos" placeholder="0" oninput="calcGrandTotal()">
+    </div>
+    <div class="field">
       <div class="lbl">Credit Card (฿)</div>
       <input class="inp inp-r" type="number" inputmode="numeric" id="edc-credit" placeholder="0" oninput="calcGrandTotal()">
     </div>
@@ -195,7 +199,7 @@ select.inp{-webkit-appearance:none;appearance:none}
       <input class="inp" id="edc-credit-note" placeholder="ประเภทบัตร / ธนาคาร">
     </div>
     <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 0;border-top:1px solid #eee;margin-top:4px">
-      <div style="font-size:13px;font-weight:600;color:#666">รวม EDC</div>
+      <div style="font-size:13px;font-weight:600;color:#666">ใบปิดเครื่องรูด (EDC1 + Credit Card)</div>
       <div style="font-size:20px;font-weight:700;color:#993556" id="edc-grand">฿ 0</div>
     </div>
   </div>
@@ -220,17 +224,14 @@ select.inp{-webkit-appearance:none;appearance:none}
         <div style="font-size:17px;font-weight:700;color:#1a7a3a" id="sum-cash">฿ 0</div>
       </div>
       <div style="background:#fff;border-radius:10px;padding:10px 12px">
-        <div style="font-size:11px;color:#888;margin-bottom:4px">เครื่องรูด (EDC + Credit)</div>
+        <div style="font-size:11px;color:#888;margin-bottom:4px">ใบปิดเครื่องรูด (EDC1 + Credit)</div>
         <div style="font-size:17px;font-weight:700;color:#993556" id="sum-edc-total">฿ 0</div>
       </div>
       <div style="background:#fff;border-radius:10px;padding:10px 12px">
         <div style="font-size:11px;color:#888;margin-bottom:4px">QR Promptpay</div>
         <div style="font-size:17px;font-weight:700;color:#185FA5" id="sum-qr">฿ 0</div>
       </div>
-      <div style="background:#f8f8f8;border-radius:10px;padding:10px 12px;border:1px dashed #ddd">
-        <div style="font-size:11px;color:#888;margin-bottom:4px">Credit Card (ใน EDC)</div>
-        <div style="font-size:15px;font-weight:600;color:#666" id="sum-credit-sub">฿ 0</div>
-      </div>
+
     </div>
     <div style="border-top:1.5px solid #f0c0d0;padding-top:12px;display:flex;justify-content:space-between;align-items:center">
       <div style="font-size:15px;font-weight:600;color:#993556">ยอดรวมทั้งหมด</div>
@@ -282,11 +283,11 @@ select.inp{-webkit-appearance:none;appearance:none}
   <button class="btn-main" onclick="applyLossToStock()">💾 บันทึกและหักสต้อก</button>
 </div>
 
-<!-- Void -->
+<!-- ยกเลิกบิล -->
 <div class="pg" id="pg7">
-  <div class="slabel">บิล Void</div>
+  <div class="slabel">รายการยกเลิกบิล</div>
   <div id="void-list"></div>
-  <button class="btn-add" onclick="addVoid()">+ เพิ่มบิล Void</button>
+  <button class="btn-add" onclick="addVoid()">+ เพิ่มรายการยกเลิกบิล</button>
   <div style="height:8px"></div>
   <button class="btn-main" onclick="saveAll()">💾 บันทึก</button>
 </div>
@@ -375,7 +376,7 @@ function mkPoItem(){return {name:'',qty:0};}
 let D={
   date:todayKey(),
   stocks:MENU_NAMES.map(mkStock),
-  cash:{bills:{},note:'',edcCredit:0,edcCreditNote:'',qrAmt:0},
+  cash:{bills:{},note:'',edcPos:0,edcCredit:0,edcCreditNote:'',qrAmt:0},
   shift:{rows:[{name:'',role:''}],reporter:'',time:'',note:''},
   voids:[],
   preorders:[],
@@ -703,6 +704,7 @@ function renderCash(){
     '</div>';
   }).join('');
   const cn=document.getElementById('cash-note');if(cn)cn.value=D.cash.note||'';
+  const ep=document.getElementById('edc-pos');if(ep)ep.value=D.cash.edcPos||'';
   const ec=document.getElementById('edc-credit');if(ec)ec.value=D.cash.edcCredit||'';
   const ecn=document.getElementById('edc-credit-note');if(ecn)ecn.value=D.cash.edcCreditNote||'';
   const qa=document.getElementById('qr-amt');if(qa)qa.value=D.cash.qrAmt||'';
@@ -724,9 +726,10 @@ function cashTotal(){return calcCash();}
 
 function calcGrandTotal(){
   const cashAmt=calcCash();
+  const edcPos=n(document.getElementById('edc-pos')?document.getElementById('edc-pos').value:D.cash.edcPos||0);
   const edcCredit=n(document.getElementById('edc-credit')?document.getElementById('edc-credit').value:D.cash.edcCredit||0);
   const qrAmt=n(document.getElementById('qr-amt')?document.getElementById('qr-amt').value:D.cash.qrAmt||0);
-  const edcTotal=edcCredit;
+  const edcTotal=edcPos+edcCredit;
   const grand=cashAmt+edcTotal+qrAmt;
   const upd=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=fmt(v);};
   upd('cash-grand',cashAmt);
@@ -735,7 +738,7 @@ function calcGrandTotal(){
   upd('sum-cash',cashAmt);
   upd('sum-edc-total',edcTotal);
   upd('sum-qr',qrAmt);
-  upd('sum-credit-sub',edcCredit);
+
   upd('grand-total',grand);
   D.cash.edcCredit=edcCredit;
   D.cash.qrAmt=qrAmt;
@@ -757,37 +760,109 @@ function renderShift(){
 }
 function addShiftRow(){D.shift.rows.push({name:'',role:''});renderShift();}
 
-/* ===== VOID ===== */
+/* ===== VOID / ยกเลิกบิล ===== */
+function mkVoid(){
+  return {
+    id:Date.now(),
+    billNo:'',
+    cancelType:'all', // all | partial
+    cancelAmt:0,
+    reason:'',
+    refund:'no', // no | yes
+    refundMethod:'cash', // cash | transfer | credit
+    refundAmt:0,
+    refundName:'',
+    refundAccNo:'',
+    refundPhoto:'',
+    reasonOther:''
+  };
+}
+
 function renderVoids(){
   const el=document.getElementById('void-list');
-  if(!D.voids.length){el.innerHTML='<div style="text-align:center;padding:32px;color:#aaa;font-size:13px">ยังไม่มีบิล Void</div>';return;}
-  el.innerHTML=D.voids.map((v,i)=>
-    '<div class="void-card">'+
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'+
-        '<div style="font-size:14px;font-weight:600">บิล Void #'+(i+1)+'</div>'+
+  if(!D.voids||!D.voids.length){
+    el.innerHTML='<div style="text-align:center;padding:32px;color:#aaa;font-size:13px">ยังไม่มีรายการยกเลิกบิล</div>';
+    return;
+  }
+  const REASONS=['ลูกค้าเปลี่ยนใจ','สินค้าหมด','สิ่งแปลกปลอม','ลูกค้าไม่พอใจ','อื่นๆ'];
+  el.innerHTML=D.voids.map((v,i)=>{
+    const isPartial=v.cancelType==='partial';
+    const needRefund=v.refund==='yes';
+    const noRefund=v.refund==='no';
+
+    // ปุ่มประเภทยกเลิก
+    const btnAll='<button onclick="setVoidType('+i+',0)" style="padding:10px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;border:1.5px solid '+(v.cancelType==='all'?'#D4537E':'#ddd')+';background:'+(v.cancelType==='all'?'#fdf0f5':'transparent')+';color:'+(v.cancelType==='all'?'#993556':'#666')+'">ยกเลิกทั้งบิล</button>';
+    const btnPartial='<button onclick="setVoidType('+i+',1)" style="padding:10px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;border:1.5px solid '+(v.cancelType==='partial'?'#D4537E':'#ddd')+';background:'+(v.cancelType==='partial'?'#fdf0f5':'transparent')+';color:'+(v.cancelType==='partial'?'#993556':'#666')+'">ยกเลิกบางรายการ</button>';
+
+    // ปุ่มสาเหตุ
+    const reasonBtns=REASONS.map((r,ri)=>'<button onclick="setVoidReason('+i+','+ri+')" style="padding:9px 6px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;border:1.5px solid '+(v.reason===r?'#D4537E':'#ddd')+';background:'+(v.reason===r?'#fdf0f5':'transparent')+';color:'+(v.reason===r?'#993556':'#666')+'">'+r+'</button>').join('');
+
+    // ปุ่มคืนเงิน
+    const btnNoRefund='<button onclick="setVoidRefund('+i+',0)" style="padding:10px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;border:1.5px solid '+(noRefund?'#1a7a3a':'#ddd')+';background:'+(noRefund?'#EAF3DE':'transparent')+';color:'+(noRefund?'#1a7a3a':'#666')+'">ไม่ต้องคืนเงิน</button>';
+    const btnYesRefund='<button onclick="setVoidRefund('+i+',1)" style="padding:10px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;border:1.5px solid '+(needRefund?'#D4537E':'#ddd')+';background:'+(needRefund?'#fdf0f5':'transparent')+';color:'+(needRefund?'#993556':'#666')+'">คืนเงิน</button>';
+
+    // ปุ่มวิธีคืนเงิน
+    const refundMethods=['cash','transfer','credit'];
+    const refundLabels=['เงินสด','โอนเงิน','เครดิตการ์ด'];
+    const methodBtns=refundMethods.map((m,mi)=>'<button onclick="setVoidRefundMethod('+i+','+mi+')" style="padding:8px 4px;border-radius:8px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;border:1.5px solid '+(v.refundMethod===m?'#D4537E':'#ddd')+';background:'+(v.refundMethod===m?'#fdf0f5':'transparent')+';color:'+(v.refundMethod===m?'#993556':'#666')+'">'+refundLabels[mi]+'</button>').join('');
+
+    return '<div class="void-card">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'+
+        '<div style="font-size:14px;font-weight:600;color:#993556">รายการยกเลิกที่ '+(i+1)+'</div>'+
         '<button style="background:none;border:none;color:#ccc;font-size:22px;cursor:pointer;line-height:1" onclick="delVoid('+i+')">×</button>'+
       '</div>'+
-      '<div class="row2">'+
-        '<div class="field"><div class="lbl">เลขบิล</div><input class="inp" value="'+esc(v.billNo)+'" placeholder="เช่น 0042" oninput="D.voids['+i+'].billNo=this.value"></div>'+
-        '<div class="field"><div class="lbl">จำนวนเงิน (฿)</div><input class="inp inp-r" type="number" inputmode="numeric" value="'+(v.amount||'')+'" placeholder="0" oninput="D.voids['+i+'].amount=n(this.value)"></div>'+
+      '<div class="field"><div class="lbl">หมายเลขบิล</div>'+
+        '<input class="inp" value="'+esc(v.billNo)+'" placeholder="เช่น 0042" oninput="D.voids['+i+'].billNo=this.value">'+
       '</div>'+
-      '<div class="field"><div class="lbl">เหตุผล</div><textarea class="inp" rows="2" placeholder="อธิบายเหตุผล..." oninput="D.voids['+i+'].reason=this.value">'+esc(v.reason)+'</textarea></div>'+
-      '<div class="field"><div class="lbl">ผู้อนุมัติ</div><input class="inp" value="'+esc(v.approver)+'" placeholder="ชื่อผู้อนุมัติ" oninput="D.voids['+i+'].approver=this.value"></div>'+
-      '<button class="photo-btn" onclick="triggerPhoto('+i+')">📷 '+(v.photo?'เปลี่ยนรูปบิล':'ถ่ายรูปบิล')+'</button>'+
-      (v.photo?'<div class="photo-preview"><img src="'+v.photo+'" alt="บิล"><button class="photo-del" onclick="delVoidPhoto('+i+')" aria-label="ลบ">×</button></div>':'')+
-    '</div>'
-  ).join('');
+      '<div class="field"><div class="lbl">ประเภทการยกเลิก</div>'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">'+btnAll+btnPartial+'</div>'+
+      '</div>'+
+      '<div class="field"><div class="lbl">'+(isPartial?'ยอดรวมรายการที่ยกเลิก (฿)':'ยอดเงินที่ยกเลิก (฿)')+'</div>'+
+        (isPartial?'<div style="font-size:11px;color:#888;margin-bottom:4px">กรอกยอดรวมของรายการที่ยกเลิก</div>':'')+
+        '<input class="inp inp-r" type="number" inputmode="numeric" value="'+(v.cancelAmt||'')+'" placeholder="0" oninput="D.voids['+i+'].cancelAmt=n(this.value)">'+
+      '</div>'+
+      '<div class="field"><div class="lbl">สาเหตุที่ยกเลิกบิล</div>'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px">'+reasonBtns+'</div>'+
+        (v.reason==='อื่นๆ'?'<input class="inp" style="margin-top:6px" placeholder="ระบุสาเหตุ..." value="'+esc(v.reasonOther||'')+'" oninput="D.voids['+i+'].reasonOther=this.value">':'')+
+      '</div>'+
+      '<div class="field" style="margin-top:4px"><div class="lbl">คืนเงินลูกค้าหรือไม่</div>'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">'+btnNoRefund+btnYesRefund+'</div>'+
+      '</div>'+
+      (needRefund?
+        '<div style="background:#f8f8f8;border-radius:10px;padding:12px;margin-top:8px">'+
+          '<div style="font-size:12px;font-weight:600;color:#993556;margin-bottom:10px">วิธีคืนเงิน</div>'+
+          '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px">'+methodBtns+'</div>'+
+          '<div class="field"><div class="lbl">จำนวนเงินคืน (฿)</div>'+
+            '<input class="inp inp-r" type="number" inputmode="numeric" value="'+(v.refundAmt||'')+'" placeholder="0" oninput="D.voids['+i+'].refundAmt=n(this.value)">'+
+          '</div>'+
+          (v.refundMethod==='transfer'?
+            '<div class="row2">'+
+              '<div class="field"><div class="lbl">ชื่อบัญชี</div><input class="inp" value="'+esc(v.refundName||'')+'" placeholder="ชื่อเจ้าของบัญชี" oninput="D.voids['+i+'].refundName=this.value"></div>'+
+              '<div class="field"><div class="lbl">เลขบัญชี</div><input class="inp" type="tel" inputmode="numeric" value="'+esc(v.refundAccNo||'')+'" placeholder="เลขบัญชี" oninput="D.voids['+i+'].refundAccNo=this.value"></div>'+
+            '</div>':'')+
+          (v.refundMethod==='cash'?
+            '<div class="field"><div class="lbl">รูปถ่ายบิลที่ลูกค้าเซ็นรับเงินคืน</div>'+
+              '<button class="photo-btn" onclick="triggerVoidPhoto('+i+')">📷 '+(v.refundPhoto?'เปลี่ยนรูป':'ถ่ายรูปบิล')+'</button>'+
+              (v.refundPhoto?'<div class="photo-preview"><img src="'+v.refundPhoto+'" alt="บิล"><button class="photo-del" onclick="delVoidPhoto('+i+')" aria-label="ลบ">×</button></div>':'')+
+            '</div>':'')+
+        '</div>'
+      : noRefund?'<div style="background:#EAF3DE;border-radius:8px;padding:8px 12px;margin-top:8px;font-size:12px;color:#1a7a3a">✓ ไม่ต้องคืนเงิน — บันทึกได้เลย</div>':'')+
+    '</div>';
+  }).join('');
 }
-function addVoid(){D.voids.push({billNo:'',amount:0,reason:'',approver:'',photo:''});renderVoids();}
-function delVoid(i){if(confirm('ลบบิล Void?')){D.voids.splice(i,1);renderVoids();}}
-function triggerPhoto(i){curVoidPhoto=i;document.getElementById('photo-input').click();}
+
+function tVoidType(i,t){D.voids[i].cancelType=t;renderVoids();}
+function setVoidRefund(i,r){D.voids[i].refund=r===0?'no':'yes';renderVoids();}
+function addVoid(){D.voids.push(mkVoid());renderVoids();}
+function delVoid(i){if(confirm('ลบรายการยกเลิกบิลนี้?')){D.voids.splice(i,1);renderVoids();}}
+function triggerVoidPhoto(i){curVoidPhoto=i;document.getElementById('photo-input').click();}
 function handlePhoto(e){
   const file=e.target.files[0];if(!file||curVoidPhoto===null)return;
   const reader=new FileReader();
-  reader.onload=ev=>{D.voids[curVoidPhoto].photo=ev.target.result;renderVoids();saveAll(true);};
+  reader.onload=ev=>{D.voids[curVoidPhoto].refundPhoto=ev.target.result;renderVoids();saveAll(true);};
   reader.readAsDataURL(file);e.target.value='';
 }
-function delVoidPhoto(i){D.voids[i].photo='';renderVoids();}
+function delVoidPhoto(i){D.voids[i].refundPhoto='';renderVoids();}
 function delOtherPay(i){if(D.cash.others)D.cash.others.splice(i,1);}
 
 
@@ -905,6 +980,7 @@ function applyLossToStock(){
 function collectForm(){
   D.stocks.forEach((s,i)=>{const ri=document.querySelector('#sr-'+i+' .ri');if(ri)s.reason=ri.value;});
   if(document.getElementById('cash-note'))D.cash.note=document.getElementById('cash-note').value;
+  if(document.getElementById('edc-pos'))D.cash.edcPos=n(document.getElementById('edc-pos').value);
   if(document.getElementById('edc-credit'))D.cash.edcCredit=n(document.getElementById('edc-credit').value);
   if(document.getElementById('edc-credit-note'))D.cash.edcCreditNote=document.getElementById('edc-credit-note').value||'';
   if(document.getElementById('qr-amt'))D.cash.qrAmt=n(document.getElementById('qr-amt').value);
@@ -1061,11 +1137,15 @@ function copyText(){
   if(delivered.length){lines.push('📦 Pre-order ส่งมอบวันนี้:');delivered.forEach(p=>{lines.push('  บิล '+p.billNo+' — '+p.customer+' ('+p.deliveryNote+')');});}
   lines.push('');
   lines.push('💰 ยอดขายรวม: '+fmt(grandTotal));
-  lines.push('  เงินสด: '+fmt(cashAmt)+' | เครื่องรูด(EDC): '+fmt(edcCredit)+' | QR Promptpay: '+fmt(qrAmt));
+  lines.push('  เงินสด: '+fmt(cashAmt)+' | ใบปิดเครื่องรูด: '+fmt(edcTotal)+' (EDC1:'+fmt(edcPos)+' Credit:'+fmt(edcCredit)+') | QR: '+fmt(qrAmt));
   if(D.shift.reporter)lines.push('\n✍️ ผู้กรอก: '+D.shift.reporter);
   const txt=lines.join('\n');
   if(navigator.clipboard){navigator.clipboard.writeText(txt).then(()=>{const ok=document.getElementById('copy-ok');ok.style.display='block';setTimeout(()=>ok.style.display='none',2500);});}
 }
+
+function setVoidType(i,t){D.voids[i].cancelType=t===0?'all':'partial';renderVoids();}
+function setVoidReason(i,ri){const R=['ลูกค้าเปลี่ยนใจ','สินค้าหมด','สิ่งแปลกปลอม','ลูกค้าไม่พอใจ','อื่นๆ'];D.voids[i].reason=R[ri];if(R[ri]!=='อื่นๆ')D.voids[i].reasonOther='';renderVoids();}
+function setVoidRefundMethod(i,mi){const M=['cash','transfer','credit'];D.voids[i].refundMethod=M[mi];renderVoids();}
 
 function goPage(i){
   document.querySelectorAll('.pg').forEach((p,j)=>p.classList.toggle('on',i===j));
