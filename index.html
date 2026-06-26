@@ -830,33 +830,26 @@ function renderCash(){
 }
 function updCash(d,v){
   D.cash.bills[d]=n(v);
-  var val=n(v);
-  var el=document.getElementById('ct-'+d);
-  if(el)el.textContent=val>0?fmt(val*d):'—';
-  // recalculate cash grand from all bills in D.cash.bills
-  var cashSum=0;
-  DENOMS.forEach(function(dd){cashSum+=n(D.cash.bills[dd]||0)*dd;});
-  var cg=document.getElementById('cash-grand');
-  if(cg)cg.textContent=fmt(cashSum);
-  var sc=document.getElementById('sum-cash');
-  if(sc)sc.textContent=fmt(cashSum);
-  // recalculate grand total
+  calcGrand();
+}
+function calcGrand(){
+  // อ่านค่าแบงค์จาก DOM โดยตรง
+  var cash=0;
+  DENOMS.forEach(function(d){
+    var inp=document.getElementById('bill-'+d);
+    var qty=inp?n(inp.value):n(D.cash.bills[d]||0);
+    cash+=qty*d;
+    var ct=document.getElementById('ct-'+d);
+    if(ct)ct.textContent=qty>0?fmt(qty*d):'—';
+  });
   var ep=document.getElementById('edc-pos');
   var ec=document.getElementById('edc-credit');
   var qa=document.getElementById('qr-amt');
-  var edc=n(ep?ep.value:0)+n(ec?ec.value:0);
-  var qr=n(qa?qa.value:0);
-  var grand=cashSum+edc+qr;
-  var gt=document.getElementById('grand-total');if(gt)gt.textContent=fmt(grand);
-  var se=document.getElementById('sum-edc');if(se)se.textContent=fmt(edc);
-  var sq=document.getElementById('sum-qr');if(sq)sq.textContent=fmt(qr);
-}
-function calcGrand(){
-  var cash=cashTotal();
-  var ep=document.getElementById('edc-pos');var edcPos=ep?n(ep.value):(D.cash.edcPos||0);
-  var ec=document.getElementById('edc-credit');var edcCredit=ec?n(ec.value):(D.cash.edcCredit||0);
-  var qa=document.getElementById('qr-amt');var qr=qa?n(qa.value):(D.cash.qrAmt||0);
-  var edc=edcPos+edcCredit;var grand=cash+edc+qr;
+  var edcPos=ep?n(ep.value):(D.cash.edcPos||0);
+  var edcCredit=ec?n(ec.value):(D.cash.edcCredit||0);
+  var qr=qa?n(qa.value):(D.cash.qrAmt||0);
+  var edc=edcPos+edcCredit;
+  var grand=cash+edc+qr;
   function upd(id,v){var el=document.getElementById(id);if(el)el.textContent=fmt(v);}
   upd('cash-grand',cash);upd('edc-grand',edc);upd('qr-grand',qr);
   upd('sum-cash',cash);upd('sum-edc',edc);upd('sum-qr',qr);upd('grand-total',grand);
