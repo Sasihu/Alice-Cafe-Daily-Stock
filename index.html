@@ -93,6 +93,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.
   <div class="nav-item"     data-pg="3" onclick="goPage(3)">📋 รายงาน</div>
   <div class="nav-item"     data-pg="4" onclick="goPage(4)">🔒 ปิดรอบ</div>
   <div class="nav-item"     data-pg="6" onclick="goPage(6)">⚠️ สูญเสีย</div>
+  <div class="nav-item"     data-pg="11" onclick="goPage(11)">🔄 ส่งคืน</div>
   <div class="nav-item"     data-pg="7" onclick="goPage(7)">🚫 ยกเลิกบิล</div>
   <div class="nav-item"     data-pg="8" onclick="goPage(8)">📤 Export</div>
 </div>
@@ -105,7 +106,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.
     <th class="sticky">รายการ</th><th>ยกยอด</th>
     <th>รับเช้า<br><span style="font-size:9px;font-weight:400">ช / บ</span></th>
     <th>เหลือ<br><span style="font-size:9px;font-weight:400">(นับจริง)</span></th>
-    <th>ใช้จริง</th><th>ยอดระบบ</th><th>ต่าง</th><th>เหตุผล</th>
+    <th>ใช้จริง</th><th>Adj</th><th>ยอดระบบ</th><th>ต่าง</th><th>เหตุผล</th>
   </tr></thead><tbody id="stock-tbody"></tbody></table></div>
   <button class="btn-add" onclick="addStockRow()">+ เพิ่มรายการสินค้า</button>
   <button class="btn btn-pink" onclick="saveAll()">💾 บันทึกยอดวันนี้</button>
@@ -128,6 +129,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.
 </div>
 
 <div class="pg" id="pg4">
+
   <div class="slabel">กะการทำงาน</div>
   <div class="card">
     <div style="display:grid;grid-template-columns:1fr 80px 100px;gap:6px;margin-bottom:8px">
@@ -138,21 +140,74 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.
     <div id="shift-rows"></div>
     <button class="btn-add" style="width:100%;margin:6px 0 0" onclick="addShiftRow()">+ เพิ่มพนักงาน</button>
   </div>
+
   <div class="slabel">ผู้กรอกรายงาน</div>
   <div class="card">
     <div class="field"><div class="lbl">ชื่อผู้กรอก</div><input class="inp" id="shift-reporter" placeholder="ชื่อ-นามสกุล หรือชื่อเล่น"></div>
     <div class="field"><div class="lbl">เวลากรอก</div><input class="inp" id="shift-time" type="time"></div>
     <div class="field"><div class="lbl">หมายเหตุวันนี้</div><textarea class="inp" rows="3" id="shift-note" placeholder="เหตุการณ์สำคัญ..."></textarea></div>
   </div>
+
   <div style="border-top:1px dashed #ddd;margin:8px 14px 16px"></div>
+
   <div class="slabel">1. เงินสด — แจกแจงแบงค์</div>
   <div class="card">
-    <div id="cash-rows"></div>
+    <div style="display:grid;grid-template-columns:70px 1fr 90px;gap:8px;align-items:center;margin-bottom:6px">
+      <div style="font-size:10px;color:#aaa;font-weight:500">แบงค์</div>
+      <div style="font-size:10px;color:#aaa;font-weight:500;text-align:center">จำนวนใบ</div>
+      <div style="font-size:10px;color:#aaa;font-weight:500;text-align:right">รวม</div>
+    </div>
+    <div id="cash-bill-1000" class="cash-row">
+      <div style="font-size:15px;font-weight:600">1,000</div>
+      <input class="inp inp-r" type="number" min="0" inputmode="numeric" placeholder="0" id="bill-1000" oninput="updCash(1000,this.value)">
+      <div style="font-size:13px;font-weight:600;text-align:right" id="ct-1000">—</div>
+    </div>
+    <div id="cash-bill-500" class="cash-row">
+      <div style="font-size:15px;font-weight:600">500</div>
+      <input class="inp inp-r" type="number" min="0" inputmode="numeric" placeholder="0" id="bill-500" oninput="updCash(500,this.value)">
+      <div style="font-size:13px;font-weight:600;text-align:right" id="ct-500">—</div>
+    </div>
+    <div id="cash-bill-100" class="cash-row">
+      <div style="font-size:15px;font-weight:600">100</div>
+      <input class="inp inp-r" type="number" min="0" inputmode="numeric" placeholder="0" id="bill-100" oninput="updCash(100,this.value)">
+      <div style="font-size:13px;font-weight:600;text-align:right" id="ct-100">—</div>
+    </div>
+    <div id="cash-bill-50" class="cash-row">
+      <div style="font-size:15px;font-weight:600">50</div>
+      <input class="inp inp-r" type="number" min="0" inputmode="numeric" placeholder="0" id="bill-50" oninput="updCash(50,this.value)">
+      <div style="font-size:13px;font-weight:600;text-align:right" id="ct-50">—</div>
+    </div>
+    <div id="cash-bill-20" class="cash-row">
+      <div style="font-size:15px;font-weight:600">20</div>
+      <input class="inp inp-r" type="number" min="0" inputmode="numeric" placeholder="0" id="bill-20" oninput="updCash(20,this.value)">
+      <div style="font-size:13px;font-weight:600;text-align:right" id="ct-20">—</div>
+    </div>
+    <div id="cash-bill-10" class="cash-row">
+      <div style="font-size:15px;font-weight:600">10</div>
+      <input class="inp inp-r" type="number" min="0" inputmode="numeric" placeholder="0" id="bill-10" oninput="updCash(10,this.value)">
+      <div style="font-size:13px;font-weight:600;text-align:right" id="ct-10">—</div>
+    </div>
+    <div id="cash-bill-5" class="cash-row">
+      <div style="font-size:15px;font-weight:600">5</div>
+      <input class="inp inp-r" type="number" min="0" inputmode="numeric" placeholder="0" id="bill-5" oninput="updCash(5,this.value)">
+      <div style="font-size:13px;font-weight:600;text-align:right" id="ct-5">—</div>
+    </div>
+    <div id="cash-bill-2" class="cash-row">
+      <div style="font-size:15px;font-weight:600">2</div>
+      <input class="inp inp-r" type="number" min="0" inputmode="numeric" placeholder="0" id="bill-2" oninput="updCash(2,this.value)">
+      <div style="font-size:13px;font-weight:600;text-align:right" id="ct-2">—</div>
+    </div>
+    <div id="cash-bill-1" class="cash-row">
+      <div style="font-size:15px;font-weight:600">1</div>
+      <input class="inp inp-r" type="number" min="0" inputmode="numeric" placeholder="0" id="bill-1" oninput="updCash(1,this.value)">
+      <div style="font-size:13px;font-weight:600;text-align:right" id="ct-1">—</div>
+    </div>
     <div style="display:flex;justify-content:space-between;padding:10px 0 0;border-top:1px solid #eee;margin-top:4px">
       <div style="font-size:13px;font-weight:600;color:#666">รวมเงินสด</div>
       <div style="font-size:20px;font-weight:700;color:#1a7a3a" id="cash-grand">฿ 0</div>
     </div>
   </div>
+
   <div class="slabel">2. EDC — เครื่องรูดบัตร</div>
   <div class="card">
     <div class="field"><div class="lbl">EDC1 — ยอด EDC POS</div><input class="inp inp-r" type="number" inputmode="numeric" id="edc-pos" placeholder="0" oninput="calcGrand()"></div>
@@ -163,6 +218,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.
       <div style="font-size:20px;font-weight:700;color:#993556" id="edc-grand">฿ 0</div>
     </div>
   </div>
+
   <div class="slabel">3. QR Promptpay Kbank</div>
   <div class="card">
     <div class="field"><div class="lbl">ยอด QR Promptpay Kbank (฿)</div><input class="inp inp-r" type="number" inputmode="numeric" id="qr-amt" placeholder="0" oninput="calcGrand()"></div>
@@ -171,6 +227,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.
       <div style="font-size:20px;font-weight:700;color:#185FA5" id="qr-grand">฿ 0</div>
     </div>
   </div>
+
   <div class="slabel">สรุปยอดขาย</div>
   <div class="card" style="background:#fdf0f5;border-color:#f0c0d0">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
@@ -183,15 +240,18 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.
       <div style="font-size:26px;font-weight:700;color:#D4537E" id="grand-total">฿ 0</div>
     </div>
   </div>
+
   <div class="slabel">หมายเหตุการส่งเงิน</div>
   <div class="card"><textarea class="inp" rows="3" id="cash-note" placeholder="เช่น ส่งเงินเวลา 17:00 น."></textarea></div>
+
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 14px 0">
     <button class="btn btn-outline" onclick="saveAll()">💾 บันทึก</button>
     <button class="btn btn-pink" style="margin:0" onclick="closeShift()">🔒 ปิดรอบ</button>
   </div>
+
 </div>
 
-<div class="pg" id="pg5"></div>
+<div class="pg" id="pg5"></div></div>
 
 <div class="pg" id="pg6">
   <div class="slabel">ส่วนที่ 1 — สินค้าหน้าร้าน</div>
@@ -285,7 +345,7 @@ function fmt(v){return '฿ '+Math.round(v).toLocaleString();}
 function mkStock(name){return {name,open:0,recv:0,recvAft:0,close:0,sys:0,reason:'',poAdj:0,lossAdj:0};}
 function nowTime(){const d=new Date();return d.getHours()+':'+pad(d.getMinutes());}
 
-let D={date:todayKey(),stocks:MENU.map(mkStock),shift:{rows:[],reporter:'',time:'',note:''},cash:{bills:{},edcPos:0,edcCredit:0,edcNote:'',qrAmt:0,note:''},preorders:[],losses:[],voids:[],closeReport:null};
+let D={date:todayKey(),stocks:MENU.map(mkStock),shift:{rows:[],reporter:'',time:'',note:''},cash:{bills:{},edcPos:0,edcCredit:0,edcNote:'',qrAmt:0,note:''},preorders:[],losses:[],voids:[],returns:[],closeReport:null};
 let curPhotoTarget=null;
 let pendingDeliveryIdx=null;
 
@@ -317,6 +377,8 @@ function applySnap(saved){
     if(!D.losses)D.losses=[];
     if(!D.voids)D.voids=[];
     if(!D.preorders)D.preorders=[];
+    if(!D.returns)D.returns=[];
+    if(D.returns.length&&D.returns[0]&&D.returns[0].items===undefined)D.returns=[];
     D.stocks=D.stocks.map(s=>Object.assign(mkStock(s.name),s));
   }
 }
@@ -364,6 +426,11 @@ function loadData(){
 }
 
 function collectForm(){
+  // collect แบงค์จาก static inputs
+  DENOMS.forEach(function(d){
+    var inp=document.getElementById('bill-'+d);
+    if(inp&&inp.value!=='')D.cash.bills[d]=n(inp.value);
+  });
   var ep=document.getElementById('edc-pos');if(ep)D.cash.edcPos=n(ep.value);
   var ec=document.getElementById('edc-credit');if(ec)D.cash.edcCredit=n(ec.value);
   var en=document.getElementById('edc-note');if(en)D.cash.edcNote=en.value;
@@ -388,6 +455,7 @@ function goPage(i){
   else if(i===7)renderVoids();
   else if(i===9)renderHistory();
   else if(i===10)renderCloseRpt();
+  else if(i===11)renderReturns();
 }
 
 function renderAll(){
@@ -395,10 +463,59 @@ function renderAll(){
   renderPOAlert();
   var td=document.getElementById('top-date');
   if(td)td.textContent=fmtDate(D.date);
+  // render ทุก section ที่โหลดข้อมูล
+  if(document.getElementById('cash-rows'))renderCash();
+  if(document.getElementById('shift-rows'))renderShift();
 }
 
-function calcActual(s){return s.open+s.recv+s.recvAft+s.poAdj+s.lossAdj-s.close;}
-function calcDiff(s){return s.sys-calcActual(s);}
+function calcPoAdjPending(stockName){
+  // Pre-order locked แต่ยังไม่ส่ง → -N (ระบบนับแล้ว ของยังไม่ออก)
+  var adj=0;
+  if(typeof D==='undefined')return 0;
+  (D.preorders||[]).filter(function(p){return p.locked&&!p.delivered;}).forEach(function(p){
+    (p.items||[]).filter(function(it){return it.name===stockName&&it.qty>0;}).forEach(function(it){
+      adj-=n(it.qty);
+    });
+  });
+  return adj;
+}
+function calcPoAdjDelivered(stockName){
+  // Pre-order ส่งมอบแล้ว (แสดงใน Adj column เพื่อข้อมูล แต่ไม่ใช้คำนวณส่วนต่าง)
+  var adj=0;
+  if(typeof D==='undefined')return 0;
+  (D.preorders||[]).filter(function(p){return p.delivered&&p.deliveredDate===D.date;}).forEach(function(p){
+    (p.items||[]).filter(function(it){return it.name===stockName&&it.qty>0;}).forEach(function(it){
+      adj+=n(it.qty);
+    });
+  });
+  return adj;
+}
+function calcLossAdj(stockName){
+  // สูญเสีย → +N
+  var adj=0;
+  if(typeof D==='undefined')return 0;
+  (D.losses||[]).filter(function(l){return l.type==='stock'&&l.name===stockName&&l.qty>0;}).forEach(function(l){
+    adj+=n(l.qty);
+  });
+  return adj;
+}
+function calcReturnAdj(stockName){
+  // ส่งคืนห้องขนม → +N (ของออกจากหน้าร้าน ระบบไม่ได้นับ)
+  var adj=0;
+  if(typeof D==='undefined')return 0;
+  (D.returns||[]).filter(function(sess){return sess.locked;}).forEach(function(sess){
+    (sess.items||[]).filter(function(it){return it.name===stockName&&it.qty>0;}).forEach(function(it){
+      adj+=n(it.qty);
+    });
+  });
+  return adj;
+}
+function calcActual(s){
+  return s.open+s.recv+s.recvAft-s.close;
+}
+function calcDiff(s){
+  return s.sys-calcActual(s)+calcPoAdjPending(s.name)+calcLossAdj(s.name)+calcReturnAdj(s.name);
+}
 function allNames(){return D.stocks.map(function(s){return s.name;});}
 function cashTotal(){var t=0;DENOMS.forEach(function(d){t+=n(D.cash.bills[d]||0)*d;});return t;}
 
@@ -436,6 +553,20 @@ function renderStock(){
       '</div></td>'+
       '<td><input class="ci ci-close" type="number" min="0" inputmode="numeric" value="'+(s.close||'')+'" placeholder="0" oninput="updS('+i+',\'close\',this.value)"></td>'+
       '<td id="act-'+i+'" style="font-weight:500">'+(untouched?'—':actual)+'</td>'+
+      (function(){
+        var pending=calcPoAdjPending(s.name);
+        var delivered=calcPoAdjDelivered(s.name);
+        var loss=calcLossAdj(s.name);
+        var ret=calcReturnAdj(s.name);
+        var total=pending+delivered+loss+ret;
+        var parts=[];
+        if(pending!==0)parts.push('<span style="color:#854F0B;font-size:11px">'+pending+' PO</span>');
+        if(delivered!==0)parts.push('<span style="color:#0d4fa0;font-size:11px">+'+delivered+' ส่ง</span>');
+        if(loss!==0)parts.push('<span style="color:#a32d2d;font-size:11px">+'+loss+' สูญ</span>');
+        if(ret!==0)parts.push('<span style="color:#7b3fa0;font-size:11px">+'+ret+' คืน</span>');
+        var adjTxt=parts.length?parts.join(' '):'—';
+        return '<td id="adj-'+i+'" style="font-size:12px;text-align:center">'+adjTxt+'</td>';
+      }())+
       '<td><input class="ci" type="number" min="0" inputmode="numeric" value="'+(s.sys||'')+'" placeholder="0" oninput="updS('+i+',\'sys\',this.value)"></td>'+
       '<td class="'+dCls+'" id="dif-'+i+'">'+dTxt+'</td>'+
       '<td><input class="ri" type="text" value="'+esc(s.reason)+'" placeholder="เหตุผล..." oninput="D.stocks['+i+'].reason=this.value"></td>'+
@@ -450,7 +581,19 @@ function updS(i,f,v){
   var untouched=s.close===0&&s.open===0&&s.sys===0;
   var dTxt=untouched?'—':diff>0?'+'+diff:diff===0?'ตรง':String(diff);
   var dCls=untouched?'':diff>0?'diff-pos':diff<0?'diff-neg':'diff-ok';
-  var ae=document.getElementById('act-'+i);if(ae)ae.textContent=untouched?'—':actual;
+  var ae=document.getElementById('act-'+i);
+  if(ae)ae.textContent=untouched?'—':actual;
+  var adjEl=document.getElementById('adj-'+i);
+  if(adjEl){
+    var _pend=calcPoAdjPending(s.name);
+    var _deliv=calcPoAdjDelivered(s.name);
+    var _loss=calcLossAdj(s.name);
+    var _parts=[];
+    if(_pend!==0)_parts.push('<span style="color:#854F0B;font-size:11px">'+_pend+' PO</span>');
+    if(_deliv!==0)_parts.push('<span style="color:#0d4fa0;font-size:11px">+'+_deliv+' ส่ง</span>');
+    if(_loss!==0)_parts.push('<span style="color:#a32d2d;font-size:11px">+'+_loss+' สูญ</span>');
+    adjEl.innerHTML=_parts.length?_parts.join(' '):'—';
+  }
   var de=document.getElementById('dif-'+i);if(de){de.textContent=dTxt;de.className=dCls;}
 }
 
@@ -475,10 +618,33 @@ function renderPO(){
     var isToday=p.pickupDate===today,isPast=p.pickupDate<today;
     var stTxt=isToday?'วันนี้':isPast?'เลยกำหนด':'รอรับ';
     var stCls=isToday?'b-warn':isPast?'b-late':'b-wait';
+    var isLocked=p.locked===true;
+    var canDelete=p.orderDate===today;
+
+    if(isLocked){
+      // card แบบ read-only
+      var items=p.items.filter(function(it){return it.name&&it.qty>0;});
+      return '<div class="po-card" style="background:#f9f9f9;border-color:#ddd">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'+
+          '<div>'+
+            '<div style="font-size:15px;font-weight:600">'+esc(p.customer||'ลูกค้า')+'<span class="badge '+stCls+'" style="margin-left:8px">'+stTxt+'</span>'+
+            '<span style="font-size:10px;background:#f0f0f0;color:#888;padding:2px 8px;border-radius:20px;margin-left:6px">🔒 บันทึกแล้ว</span></div>'+
+            '<div style="font-size:11px;color:#888;margin-top:2px">บิล: '+esc(p.billNo||'-')+' · สั่ง: '+esc(p.orderDate||'-')+' · นัดรับ: '+fmtShort(p.pickupDate)+(p.pickupTime?' '+p.pickupTime:'')+'</div>'+
+            '<div style="font-size:11px;color:#888">รับเรื่องโดย: '+esc(p.staff||'-')+' · โทร: '+esc(p.phone||'-')+'</div>'+
+          '</div>'+
+          (canDelete?'<button onclick="delPO('+i+')" style="background:none;border:none;color:#ccc;font-size:22px;cursor:pointer;line-height:1" title="ลบได้เฉพาะวันนี้">×</button>':'<span style="font-size:11px;color:#ccc">ลบไม่ได้</span>')+
+        '</div>'+
+        '<div style="background:#fff;border-radius:8px;padding:8px 10px">'+
+          items.map(function(it){return '<div class="item-line"><span>'+esc(it.name)+'</span><span style="font-weight:600">'+it.qty+' ชิ้น</span></div>';}).join('')+
+        '</div>'+
+      '</div>';
+    }
+
+    // card แบบ edit ได้
     var html='<div class="po-card">'+
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'+
-        '<div><div style="font-size:15px;font-weight:600">'+esc(p.customer||'ลูกค้า')+'<span class="badge '+stCls+'" style="margin-left:8px">'+stTxt+'</span></div>'+
-        '<div style="font-size:11px;color:#888;margin-top:2px">นัดรับ: '+fmtShort(p.pickupDate)+(p.pickupTime?' เวลา '+p.pickupTime:'')+'</div></div>'+
+        '<div><div style="font-size:15px;font-weight:600">'+esc(p.customer||'ลูกค้าใหม่')+'<span class="badge b-wait" style="margin-left:8px">ยังไม่บันทึก</span></div>'+
+        '<div style="font-size:11px;color:#888;margin-top:2px">วันที่สั่ง: '+esc(p.orderDate||today)+'</div></div>'+
         '<button onclick="delPO('+i+')" style="background:none;border:none;color:#ccc;font-size:22px;cursor:pointer;line-height:1">×</button>'+
       '</div>'+
       '<div class="field"><div class="lbl">เลขที่บิล</div><input class="inp" value="'+esc(p.billNo||'')+'" placeholder="เช่น PO001" oninput="D.preorders['+i+'].billNo=this.value"></div>'+
@@ -488,7 +654,7 @@ function renderPO(){
         '<div class="field"><div class="lbl">เวลารับ</div><input class="inp" type="time" value="'+(p.pickupTime||'')+'" oninput="D.preorders['+i+'].pickupTime=this.value"></div>'+
       '</div>'+
       '<div class="row2">'+
-        '<div class="field"><div class="lbl">วันนัดรับ</div><input class="inp" type="date" value="'+p.pickupDate+'" min="'+today+'" onchange="D.preorders['+i+'].pickupDate=this.value;renderPO()"></div>'+
+        '<div class="field"><div class="lbl">วันนัดรับ (ห้ามย้อนหลัง)</div><input class="inp" type="date" value="'+p.pickupDate+'" min="'+today+'" onchange="D.preorders['+i+'].pickupDate=this.value;renderPO()"></div>'+
         '<div class="field"><div class="lbl">พนักงานรับเรื่อง</div><input class="inp" value="'+esc(p.staff||'')+'" oninput="D.preorders['+i+'].staff=this.value"></div>'+
       '</div>'+
       '<div style="font-size:11px;color:#888;margin-bottom:6px;font-weight:500">รายการสินค้า</div>'+
@@ -499,7 +665,9 @@ function renderPO(){
         '<input class="inp inp-r" type="number" min="0" inputmode="numeric" value="'+(it.qty||'')+'" placeholder="0" oninput="D.preorders['+i+'].items['+j+'].qty=n(this.value)">'+
       '</div>';
     });
-    html+='</div>';
+    html+=
+      '<button onclick="lockPO('+i+')" style="width:100%;padding:12px;background:#D4537E;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:6px">✅ บันทึกออเดอร์</button>'+
+    '</div>';
     return html;
   }).join('');
 }
@@ -510,7 +678,26 @@ function addPO(){
     delivered:false,deliveredBy:'',deliveredAt:'',deliveryNote:'',deliveredDate:''});
   renderPO();saveAll(true);
 }
-function delPO(i){if(confirm('ลบ Pre-order?')){D.preorders.splice(i,1);renderPO();renderPOAlert();saveAll(true);}}
+function lockPO(i){
+  var p=D.preorders[i];
+  if(!p.customer){alert('กรุณาใส่ชื่อลูกค้าก่อนบันทึก');return;}
+  var hasItem=p.items.filter(function(it){return it.name&&it.qty>0;}).length>0;
+  if(!hasItem){alert('กรุณาเลือกรายการสินค้าอย่างน้อย 1 รายการ');return;}
+  if(!confirm('ยืนยันบันทึกออเดอร์? หลังจากนี้จะไม่สามารถแก้ไขได้')){return;}
+  D.preorders[i].locked=true;
+  D.preorders[i].orderDate=D.preorders[i].orderDate||D.date;
+  renderPO();saveAll(true);
+}
+
+function delPO(i){
+  var p=D.preorders[i];
+  var today=D.date;
+  if(p.locked&&p.orderDate&&p.orderDate!==today){
+    alert('ไม่สามารถลบได้ เนื่องจากบันทึกออเดอร์ไปแล้วในวัน '+fmtShort(p.orderDate));return;
+  }
+  if(!confirm('ลบ Pre-order นี้?')){return;}
+  D.preorders.splice(i,1);renderPO();renderPOAlert();saveAll(true);
+}
 
 function renderPickup(){
   var el=document.getElementById('pickup-list');if(!el)return;
@@ -566,7 +753,6 @@ function confirmDelivery(){
   p.items.filter(function(it){return it.name&&it.qty>0;}).forEach(function(it){
     var si=D.stocks.findIndex(function(s){return s.name===it.name;});
     if(si>=0){
-      D.stocks[si].poAdj=(D.stocks[si].poAdj||0)+n(it.qty);
       var nm='PO '+(p.billNo||'')+'/'+p.customer;
       D.stocks[si].reason=D.stocks[si].reason?D.stocks[si].reason+', '+nm:nm;
     }
@@ -627,27 +813,43 @@ function shiftRole(i,v){D.shift.rows[i].role=v;renderShift();}
 function addShiftRow(){D.shift.rows.push({name:'',time:'',role:'',nameOther:'',roleOther:''});renderShift();}
 
 function renderCash(){
-  var el=document.getElementById('cash-rows');if(!el)return;
-  el.innerHTML=DENOMS.map(function(d,i){
+  // โหลดค่าแบงค์ลงใน static inputs
+  DENOMS.forEach(function(d){
+    var inp=document.getElementById('bill-'+d);
+    var ct=document.getElementById('ct-'+d);
     var v=D.cash.bills[d]||0;
-    return '<div class="cash-row">'+
-      '<div style="font-size:15px;font-weight:600">'+d.toLocaleString()+'</div>'+
-      '<input class="inp inp-r" type="number" min="0" inputmode="numeric" value="'+(v||'')+'" placeholder="0" oninput="updCash('+d+',this.value)">'+
-      '<div style="font-size:13px;font-weight:600;text-align:right" id="ct-'+i+'">'+(v?fmt(v*d):'—')+'</div>'+
-    '</div>';
-  }).join('');
+    if(inp)inp.value=v||'';
+    if(ct)ct.textContent=v?fmt(v*d):'—';
+  });
   var ep=document.getElementById('edc-pos');if(ep)ep.value=D.cash.edcPos||'';
   var ec=document.getElementById('edc-credit');if(ec)ec.value=D.cash.edcCredit||'';
   var en=document.getElementById('edc-note');if(en)en.value=D.cash.edcNote||'';
   var qa=document.getElementById('qr-amt');if(qa)qa.value=D.cash.qrAmt||'';
   var cn=document.getElementById('cash-note');if(cn)cn.value=D.cash.note||'';
-  setTimeout(calcGrand,50);
+  calcGrand();
 }
 function updCash(d,v){
   D.cash.bills[d]=n(v);
-  var i=DENOMS.indexOf(d);var val=n(v);
-  var el=document.getElementById('ct-'+i);if(el)el.textContent=val?fmt(val*d):'—';
-  calcGrand();
+  var val=n(v);
+  var el=document.getElementById('ct-'+d);
+  if(el)el.textContent=val>0?fmt(val*d):'—';
+  // recalculate cash grand from all bills in D.cash.bills
+  var cashSum=0;
+  DENOMS.forEach(function(dd){cashSum+=n(D.cash.bills[dd]||0)*dd;});
+  var cg=document.getElementById('cash-grand');
+  if(cg)cg.textContent=fmt(cashSum);
+  var sc=document.getElementById('sum-cash');
+  if(sc)sc.textContent=fmt(cashSum);
+  // recalculate grand total
+  var ep=document.getElementById('edc-pos');
+  var ec=document.getElementById('edc-credit');
+  var qa=document.getElementById('qr-amt');
+  var edc=n(ep?ep.value:0)+n(ec?ec.value:0);
+  var qr=n(qa?qa.value:0);
+  var grand=cashSum+edc+qr;
+  var gt=document.getElementById('grand-total');if(gt)gt.textContent=fmt(grand);
+  var se=document.getElementById('sum-edc');if(se)se.textContent=fmt(edc);
+  var sq=document.getElementById('sum-qr');if(sq)sq.textContent=fmt(qr);
 }
 function calcGrand(){
   var cash=cashTotal();
@@ -794,8 +996,22 @@ function renderLossStock(){
   var el=document.getElementById('loss-stock-list');if(!el)return;
   var items=D.losses.filter(function(l){return l.type==='stock';});
   if(!items.length){el.innerHTML='<div style="text-align:center;padding:20px;color:#aaa;font-size:13px">ยังไม่มีรายการ</div>';return;}
+  var today=D.date;
   el.innerHTML=items.map(function(l,ii){
     var ri=D.losses.indexOf(l);
+    var isLocked=l.locked===true;
+    var canDelete=!l.date||l.date===today;
+    if(isLocked){
+      var rt=l.reason==='อื่นๆ'?(l.reasonOther||'อื่นๆ'):l.reason;
+      return '<div class="loss-card" style="background:#f9f9f9;border-color:#ddd">'+
+        '<div style="display:flex;justify-content:space-between;margin-bottom:8px">'+
+          '<div style="font-size:13px;font-weight:500;color:#993556">รายการ '+(ii+1)+' <span style="font-size:10px;background:#f0f0f0;color:#888;padding:2px 8px;border-radius:20px">🔒 บันทึกแล้ว</span></div>'+
+          (canDelete?'<button onclick="delLoss('+ri+')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer">×</button>':'<span style="font-size:11px;color:#ccc">ลบไม่ได้</span>')+
+        '</div>'+
+        '<div style="font-size:13px;font-weight:500">'+esc(l.name)+'</div>'+
+        '<div style="font-size:12px;color:#888;margin-top:4px">จำนวน: '+l.qty+' ชิ้น · '+esc(rt)+(l.note?' · '+esc(l.note):'')+'</div>'+
+      '</div>';
+    }
     return '<div class="loss-card">'+
       '<div style="display:flex;justify-content:space-between;margin-bottom:8px"><div style="font-size:13px;font-weight:500;color:#993556">รายการ '+(ii+1)+'</div><button onclick="delLoss('+ri+')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer">×</button></div>'+
       '<div class="row2" style="margin-bottom:6px">'+
@@ -804,11 +1020,13 @@ function renderLossStock(){
       '</div>'+
       '<div class="lbl">เหตุผล</div><select class="inp" style="font-size:13px;margin-bottom:4px" onchange="D.losses['+ri+'].reason=this.value;renderLossStock()">'+lrOpts(l.reason)+'</select>'+
       (l.reason==='อื่นๆ'?'<input class="inp" placeholder="ระบุเหตุผล..." value="'+esc(l.reasonOther||'')+'" oninput="D.losses['+ri+'].reasonOther=this.value" style="margin-bottom:4px">':'')+
-      '<div class="lbl">โน้ต</div><input class="inp" placeholder="รายละเอียด..." value="'+esc(l.note||'')+'" oninput="D.losses['+ri+'].note=this.value">'+
+      '<div class="lbl">โน้ต</div><input class="inp" placeholder="รายละเอียด..." value="'+esc(l.note||'')+'" oninput="D.losses['+ri+'].note=this.value" style="margin-bottom:8px">'+
+      '<button onclick="lockLoss('+ri+')" style="width:100%;padding:10px;background:#D4537E;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">💾 บันทึกและหักสต็อก</button>'+
     '</div>';
   }).join('');
 }
-function renderLossOther(){
+
+function LossOther(){
   var el=document.getElementById('loss-other-list');if(!el)return;
   var items=D.losses.filter(function(l){return l.type==='other';});
   if(!items.length){el.innerHTML='<div style="text-align:center;padding:20px;color:#aaa;font-size:13px">ยังไม่มีรายการ</div>';return;}
@@ -826,15 +1044,39 @@ function renderLossOther(){
     '</div>';
   }).join('');
 }
+function lockLoss(ri){
+  var l=D.losses[ri];
+  if(!l.name){alert('กรุณาเลือกสินค้าหรือใส่ชื่อรายการก่อน');return;}
+  if(!l.qty||l.qty<=0){alert('กรุณาใส่จำนวนก่อน');return;}
+  if(!confirm('ยืนยันบันทึกและหักสต็อก? แก้ไขไม่ได้หลังจากนี้')){return;}
+  D.losses[ri].locked=true;
+  D.losses[ri].date=D.date;
+  // หักสต็อกทันทีถ้าเป็นรายการ stock
+  if(l.type==='stock'){
+    var note='สูญเสีย('+(l.reason==='อื่นๆ'?(l.reasonOther||'อื่นๆ'):l.reason)+')'+(l.note?' — '+l.note:'');
+    // calcLossAdj จะคำนวณอัตโนมัติจาก D.losses
+  }
+  saveAll(true);
+  renderLoss();
+  renderStock();
+}
+
 function addLossStock(){D.losses.push({type:'stock',name:'',qty:0,reason:'สินค้าเสียหาย',reasonOther:'',note:''});renderLossStock();}
 function addLossOther(){D.losses.push({type:'other',name:'',qty:0,reason:'สินค้าเสียหาย',reasonOther:'',note:''});renderLossOther();}
-function delLoss(i){D.losses.splice(i,1);renderLoss();}
+function delLoss(i){
+  var l=D.losses[i];
+  var today=D.date;
+  if(l.locked&&l.date&&l.date!==today){
+    alert('ไม่สามารถลบได้ บันทึกไปแล้วเมื่อวันที่ '+fmtShort(l.date));return;
+  }
+  if(!confirm('ลบรายการนี้?')){return;}
+  D.losses.splice(i,1);renderLoss();saveAll(true);
+}
 function applyLoss(){
   D.stocks.forEach(function(s){s.lossAdj=0;s.reason='';});
   D.losses.filter(function(l){return l.type==='stock'&&l.name&&l.qty>0;}).forEach(function(l){
     var si=D.stocks.findIndex(function(s){return s.name===l.name;});
     if(si>=0){
-      D.stocks[si].lossAdj=(D.stocks[si].lossAdj||0)-n(l.qty);
       var rt=l.reason==='อื่นๆ'?(l.reasonOther||'อื่นๆ'):l.reason;
       var note='สูญเสีย('+rt+')'+(l.note?' — '+l.note:'');
       D.stocks[si].reason=D.stocks[si].reason?D.stocks[si].reason+' | '+note:note;
@@ -846,7 +1088,23 @@ function applyLoss(){
 function renderVoids(){
   var el=document.getElementById('void-list');if(!el)return;
   if(!D.voids.length){el.innerHTML='<div style="text-align:center;padding:32px;color:#aaa;font-size:13px">ยังไม่มีรายการยกเลิก</div>';return;}
+  var today=D.date;
   el.innerHTML=D.voids.map(function(v,i){
+    var isLocked=v.locked===true;
+    var canDelete=!v.date||v.date===today;
+    if(isLocked){
+      var rt=v.reason==='อื่นๆ'?(v.reasonOther||'อื่นๆ'):v.reason;
+      var refundTxt=v.refund==='yes'?('คืน '+fmt(v.refundAmt)+' ('+ (['เงินสด','โอนเงิน','เครดิต'])[['cash','transfer','credit'].indexOf(v.refundMethod)]+')') :'ไม่คืนเงิน';
+      return '<div class="void-card" style="background:#f9f9f9;border-color:#ddd">'+
+        '<div style="display:flex;justify-content:space-between;margin-bottom:10px">'+
+          '<div><div style="font-size:14px;font-weight:600;color:#993556">บิล '+esc(v.billNo||'-')+' <span style="font-size:10px;background:#f0f0f0;color:#888;padding:2px 8px;border-radius:20px">🔒 บันทึกแล้ว</span></div>'+
+          '<div style="font-size:12px;color:#888;margin-top:4px">'+esc(v.cancelType==='all'?'ยกเลิกทั้งบิล':'ยกเลิกบางรายการ')+' · ยอด '+fmt(v.cancelAmt)+'</div>'+
+          '<div style="font-size:12px;color:#888">สาเหตุ: '+esc(rt)+(v.note?' · '+esc(v.note):'')+'</div>'+
+          '<div style="font-size:12px;color:#888">'+refundTxt+'</div></div>'+
+          (canDelete?'<button onclick="delVoid('+i+')" style="background:none;border:none;color:#ccc;font-size:22px;cursor:pointer">×</button>':'<span style="font-size:11px;color:#ccc">ลบไม่ได้</span>')+
+        '</div>'+
+      '</div>';
+    }
     var isPartial=v.cancelType==='partial';
     var needRef=v.refund==='yes';var noRef=v.refund==='no';
     function btnCls(active){return 'padding:9px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;width:100%;border:1.5px solid '+(active?'#D4537E':'#ddd')+';background:'+(active?'#fdf0f5':'transparent')+';color:'+(active?'#993556':'#666');}
@@ -857,32 +1115,50 @@ function renderVoids(){
       '<div style="display:flex;justify-content:space-between;margin-bottom:12px"><div style="font-size:14px;font-weight:600;color:#993556">รายการที่ '+(i+1)+'</div><button onclick="delVoid('+i+')" style="background:none;border:none;color:#ccc;font-size:22px;cursor:pointer">×</button></div>'+
       '<div class="field"><div class="lbl">หมายเลขบิล</div><input class="inp" value="'+esc(v.billNo||'')+'" placeholder="เช่น 0042" oninput="D.voids['+i+'].billNo=this.value"></div>'+
       '<div class="field"><div class="lbl">ประเภท</div><div class="row2" style="margin-top:4px"><button onclick="voidType('+i+',0)" style="'+btnCls(!isPartial)+'">ยกเลิกทั้งบิล</button><button onclick="voidType('+i+',1)" style="'+btnCls(isPartial)+'">ยกเลิกบางรายการ</button></div></div>'+
-      '<div class="field"><div class="lbl">'+(isPartial?'ยอดรวมรายการที่ยกเลิก':'ยอดเงินที่ยกเลิก')+' (฿)</div>'+
-        (isPartial?'<div style="font-size:11px;color:#888;margin-bottom:4px">กรอกยอดรวมของรายการที่ยกเลิก</div>':'')+
+      '<div class="field"><div class="lbl">'+(isPartial?'ยอดรวมรายการที่ยกเลิก':'ยอดเงินที่ยกเลิก')+' (฿)</div>'+(isPartial?'<div style="font-size:11px;color:#888;margin-bottom:4px">กรอกยอดรวมของรายการที่ยกเลิก</div>':'')+
         '<input class="inp inp-r" type="number" inputmode="numeric" value="'+(v.cancelAmt||'')+'" placeholder="0" oninput="D.voids['+i+'].cancelAmt=n(this.value)"></div>'+
-      '<div class="field"><div class="lbl">สาเหตุ</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px">'+reasonBtns+'</div>'+
-        (v.reason==='อื่นๆ'?'<input class="inp" style="margin-top:6px" placeholder="ระบุสาเหตุ..." value="'+esc(v.reasonOther||'')+'" oninput="D.voids['+i+'].reasonOther=this.value">':'')+
+      '<div class="field"><div class="lbl">สาเหตุ</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px">'+reasonBtns+'</div>'+(v.reason==='อื่นๆ'?'<input class="inp" style="margin-top:6px" placeholder="ระบุสาเหตุ..." value="'+esc(v.reasonOther||'')+'" oninput="D.voids['+i+'].reasonOther=this.value">':'')+
       '</div>'+
       '<div class="field"><div class="lbl">หมายเหตุ</div><input class="inp" value="'+esc(v.note||'')+'" placeholder="บันทึกเพิ่มเติม..." oninput="D.voids['+i+'].note=this.value"></div>'+
       '<div class="field"><div class="lbl">คืนเงินลูกค้า</div><div class="row2" style="margin-top:4px"><button onclick="voidRefund('+i+',0)" style="'+btnGreen(noRef)+'">ไม่ต้องคืนเงิน</button><button onclick="voidRefund('+i+',1)" style="'+btnCls(needRef)+'">คืนเงิน</button></div></div>'+
-      (noRef?'<div style="background:#EAF3DE;border-radius:8px;padding:8px 12px;font-size:12px;color:#1a7a3a">✓ ไม่ต้องคืนเงิน</div>':'')+
-      (needRef?'<div style="background:#f8f8f8;border-radius:10px;padding:12px;margin-top:8px">'+
+      (noRef?'<div style="background:#EAF3DE;border-radius:8px;padding:8px 12px;font-size:12px;color:#1a7a3a;margin-bottom:8px">✓ ไม่ต้องคืนเงิน</div>':'')+
+      (needRef?'<div style="background:#f8f8f8;border-radius:10px;padding:12px;margin-top:8px;margin-bottom:8px">'+
         '<div style="font-size:12px;font-weight:600;color:#993556;margin-bottom:10px">วิธีคืนเงิน</div>'+
         '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px">'+methodBtns+'</div>'+
         '<div class="field"><div class="lbl">จำนวนเงินคืน (฿)</div><input class="inp inp-r" type="number" inputmode="numeric" value="'+(v.refundAmt||'')+'" placeholder="0" oninput="D.voids['+i+'].refundAmt=n(this.value)"></div>'+
         (v.refundMethod==='transfer'?'<div class="row2"><div class="field"><div class="lbl">ชื่อบัญชี</div><input class="inp" value="'+esc(v.refundName||'')+'" oninput="D.voids['+i+'].refundName=this.value"></div><div class="field"><div class="lbl">เลขบัญชี</div><input class="inp" type="tel" value="'+esc(v.refundAccNo||'')+'" oninput="D.voids['+i+'].refundAccNo=this.value"></div></div>':'')+
         (v.refundMethod==='cash'?'<div class="field"><div class="lbl">รูปถ่ายบิล</div><button class="photo-btn" onclick="triggerPhoto('+i+')">📷 '+(v.refundPhoto?'เปลี่ยนรูป':'ถ่ายรูปบิล')+'</button>'+(v.refundPhoto?'<div class="photo-preview"><img src="'+v.refundPhoto+'" alt="บิล"><button class="photo-del" onclick="delPhoto('+i+')" aria-label="ลบ">×</button></div>':'')+'</div>':'')+
       '</div>':'')+
+      '<button onclick="lockVoid('+i+')" style="width:100%;padding:12px;background:#D4537E;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">💾 บันทึกและหักสต็อก</button>'+
     '</div>';
     return html;
   }).join('');
 }
-function voidType(i,t){D.voids[i].cancelType=t===0?'all':'partial';renderVoids();}
+
+function  voidType(i,t){D.voids[i].cancelType=t===0?'all':'partial';renderVoids();}
 function voidReason(i,ri){D.voids[i].reason=VOID_REASONS[ri];renderVoids();}
 function voidRefund(i,r){D.voids[i].refund=r===0?'no':'yes';renderVoids();}
 function voidMethod(i,mi){D.voids[i].refundMethod=['cash','transfer','credit'][mi];renderVoids();}
+function lockVoid(i){
+  var v=D.voids[i];
+  if(!v.billNo){alert('กรุณาใส่หมายเลขบิลก่อน');return;}
+  if(!v.cancelAmt||v.cancelAmt<=0){alert('กรุณาใส่ยอดเงินที่ยกเลิกก่อน');return;}
+  if(!v.reason){alert('กรุณาเลือกสาเหตุก่อน');return;}
+  if(!confirm('ยืนยันบันทึกรายการยกเลิกบิล? แก้ไขไม่ได้หลังจากนี้')){return;}
+  D.voids[i].locked=true;
+  D.voids[i].date=D.date;
+  saveAll(true);renderVoids();
+}
 function addVoid(){D.voids.push({billNo:'',cancelType:'all',cancelAmt:0,reason:'',reasonOther:'',note:'',refund:'no',refundMethod:'cash',refundAmt:0,refundName:'',refundAccNo:'',refundPhoto:''});renderVoids();}
-function delVoid(i){if(confirm('ลบรายการนี้?')){D.voids.splice(i,1);renderVoids();}}
+function delVoid(i){
+  var v=D.voids[i];
+  var today=D.date;
+  if(v.locked&&v.date&&v.date!==today){
+    alert('ไม่สามารถลบได้ บันทึกไปแล้วเมื่อวันที่ '+fmtShort(v.date));return;
+  }
+  if(!confirm('ลบรายการยกเลิกบิลนี้?')){return;}
+  D.voids.splice(i,1);renderVoids();saveAll(true);
+}
 function triggerPhoto(i){curPhotoTarget=i;document.getElementById('photo-inp').click();}
 function handlePhoto(e){
   var f=e.target.files[0];if(!f||curPhotoTarget===null)return;
@@ -969,7 +1245,107 @@ function sendEmail(){
   });
 }
 
-function exportXLSX(){
+
+function renderReturns(){
+  var el=document.getElementById('return-list');if(!el)return;
+  if(!D.returns)D.returns=[];
+    if(D.returns.length&&D.returns[0]&&D.returns[0].items===undefined)D.returns=[];
+  var today=D.date;
+  // กรอง session วันนี้เท่านั้น
+  var sessions=D.returns.filter(function(s){return s.date===today||!s.locked;});
+  if(!sessions.length){
+    el.innerHTML='<div style="text-align:center;padding:20px;color:#aaa;font-size:13px">ยังไม่มีรายการส่งคืน<br><span style="font-size:11px">กด + เพิ่มรายการส่งคืน เพื่อเริ่มต้น</span></div>';return;
+  }
+  el.innerHTML=sessions.map(function(sess,si){
+    var ri=D.returns.indexOf(sess);
+    var canDelete=!sess.locked||(sess.date===today);
+    var sessionLabel='ครั้งที่ '+sess.sessionNo+' — '+fmtShort(sess.date);
+    if(sess.locked){
+      var validItems=sess.items.filter(function(it){return it.name&&it.qty>0;});
+      return '<div class="loss-card" style="background:#f9f9f9;border-color:#c8a8e0;border-width:1.5px">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'+
+          '<div>'+
+            '<div style="font-size:13px;font-weight:600;color:#7b3fa0">'+sessionLabel+'</div>'+
+            '<span style="font-size:10px;background:#f0e8f8;color:#7b3fa0;padding:2px 8px;border-radius:20px;margin-top:4px;display:inline-block">🔒 บันทึกแล้ว</span>'+
+          '</div>'+
+          (canDelete?'<button onclick="delReturn('+ri+')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer" title="ลบ">×</button>':'<span style="font-size:11px;color:#ccc">ลบไม่ได้</span>')+
+        '</div>'+
+        '<div style="background:#fff;border-radius:8px;padding:8px 10px">'+
+          validItems.map(function(it){
+            return '<div class="item-line"><span>'+esc(it.name)+'</span><span style="font-weight:600;color:#7b3fa0">'+it.qty+' ชิ้น</span></div>';
+          }).join('')+
+        '</div>'+
+      '</div>';
+    }
+    // session ที่ยังไม่ lock
+    var rows='';
+    for(var j=0;j<10;j++){
+      var it=sess.items[j]||{name:'',qty:0};
+      rows+=
+        '<div style="display:grid;grid-template-columns:1fr 70px;gap:6px;margin-bottom:6px">'+
+          '<select class="inp" style="font-size:13px;padding:7px 8px" onchange="D.returns['+ri+'].items['+j+'].name=this.value">'+
+            '<option value="">— เลือกสินค้า —</option>'+
+            allNames().map(function(nm){return '<option value="'+esc(nm)+'"'+(nm===it.name?' selected':'')+'>'+esc(nm)+'</option>';}).join('')+
+          '</select>'+
+          '<input class="inp inp-r" type="number" min="0" inputmode="numeric" value="'+(it.qty||'')+'" placeholder="0" oninput="D.returns['+ri+'].items['+j+'].qty=n(this.value)">'+
+        '</div>';
+    }
+    return '<div class="loss-card" style="border-color:#c8a8e0;border-width:1.5px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'+
+        '<div style="font-size:13px;font-weight:600;color:#7b3fa0">'+sessionLabel+'</div>'+
+        '<button onclick="delReturn('+ri+')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer">×</button>'+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 70px;gap:6px;margin-bottom:6px">'+
+        '<div style="font-size:10px;color:#aaa;padding:0 2px">สินค้า</div>'+
+        '<div style="font-size:10px;color:#aaa;text-align:center">จำนวน</div>'+
+      '</div>'+
+      rows+
+      '<button onclick="lockReturn('+ri+')" style="width:100%;padding:12px;background:#7b3fa0;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:4px">💾 บันทึกและตัดสต็อก</button>'+
+    '</div>';
+  }).join('');
+}
+
+function addReturn(){
+  if(!D.returns)D.returns=[];
+    if(D.returns.length&&D.returns[0]&&D.returns[0].items===undefined)D.returns=[];
+  // นับ session วันนี้
+  var today=D.date;
+  var todaySessions=D.returns.filter(function(s){return s.date===today;});
+  var sessionNo=todaySessions.length+1;
+  var items=[];
+  for(var i=0;i<10;i++)items.push({name:'',qty:0});
+  D.returns.push({date:today,sessionNo:sessionNo,locked:false,items:items});
+  renderReturns();
+}
+
+function lockReturn(ri){
+  var sess=D.returns[ri];
+  var validItems=sess.items.filter(function(it){return it.name&&it.qty>0;});
+  if(!validItems.length){alert('กรุณาเลือกสินค้าอย่างน้อย 1 รายการก่อนบันทึก');return;}
+  if(!confirm('ยืนยันบันทึกและตัดสต็อก? แก้ไขไม่ได้หลังจากนี้')){return;}
+  D.returns[ri].locked=true;
+  saveAll(true);
+  renderReturns();
+  renderStock();
+}
+
+function delReturn(ri){
+  var sess=D.returns[ri];
+  var today=D.date;
+  if(sess.locked&&sess.date!==today){
+    alert('ไม่สามารถลบได้ บันทึกไปแล้วเมื่อ '+fmtShort(sess.date));return;
+  }
+  if(!confirm('ลบรายการส่งคืนครั้งที่ '+sess.sessionNo+'?')){return;}
+  D.returns.splice(ri,1);
+  // renumber sessions วันนี้
+  var today2=D.date;var no=1;
+  D.returns.filter(function(s){return s.date===today2;}).forEach(function(s){s.sessionNo=no++;});
+  renderReturns();
+  renderStock();
+  saveAll(true);
+}
+
+function exportXLSX(){function exportXLSX(){
   if(typeof XLSX==='undefined'){alert('กำลังโหลด... ลองใหม่');return;}
   collectForm();var wb=XLSX.utils.book_new();var ds=fmtDate(D.date);
   var sr=[['รายงานสต้อก — ALICE CAFE'],['วันที่: '+ds],[],['รายการ','ยกยอด','รับ(ช)','รับ(บ)','คงเหลือ','ใช้จริง','ยอดระบบ','ส่วนต่าง','เหตุผล']];
@@ -1000,6 +1376,7 @@ function exportXLSX(){
   var ws7=XLSX.utils.aoa_to_sheet(shR);XLSX.utils.book_append_sheet(wb,ws7,'กะพนักงาน');
   XLSX.writeFile(wb,'ALICE_CAFE_รายงาน_'+D.date+'.xlsx');
 }
+}
 
 function exportCSV(){
   collectForm();
@@ -1025,5 +1402,13 @@ document.getElementById('top-date').textContent=fmtDate(todayKey());
 loadData();
 
 </script>
+
+<!-- ส่งคืนห้องขนม -->
+<div class="pg" id="pg11">
+  <div class="slabel">รายการส่งคืนห้องขนม</div>
+  <div id="return-list"></div>
+  <button class="btn-add" onclick="addReturn()">+ เพิ่มรายการส่งคืน</button>
+  <div style="height:8px"></div>
+</div>
 </body>
 </html>
