@@ -596,10 +596,12 @@ function updS(i,f,v){
     var _pend=calcPoAdjPending(s.name);
     var _deliv=calcPoAdjDelivered(s.name);
     var _loss=calcLossAdj(s.name);
+    var _ret=calcReturnAdj(s.name);
     var _parts=[];
     if(_pend!==0)_parts.push('<span style="color:#854F0B;font-size:11px">'+_pend+' PO</span>');
     if(_deliv!==0)_parts.push('<span style="color:#0d4fa0;font-size:11px">+'+_deliv+' ส่ง</span>');
     if(_loss!==0)_parts.push('<span style="color:#a32d2d;font-size:11px">+'+_loss+' สูญ</span>');
+    if(_ret!==0)_parts.push('<span style="color:#7b3fa0;font-size:11px">+'+_ret+' คืน</span>');
     adjEl.innerHTML=_parts.length?_parts.join(' '):'—';
   }
   var de=document.getElementById('dif-'+i);if(de){de.textContent=dTxt;de.className=dCls;}
@@ -1045,6 +1047,7 @@ function renderLossStock(){
         '</div>'+
         '<div style="font-size:13px;font-weight:500">'+esc(l.name)+'</div>'+
         '<div style="font-size:12px;color:#888;margin-top:4px">จำนวน: '+l.qty+' ชิ้น · '+esc(rt)+(l.note?' · '+esc(l.note):'')+'</div>'+
+        (l.staff?'<div style="font-size:11px;color:#7b3fa0;margin-top:3px">👤 '+(l.staff==='อื่นๆ'?(l.staffOther||'อื่นๆ'):l.staff)+'</div>':'')+
       '</div>';
     }
     return '<div class="loss-card">'+
@@ -1056,6 +1059,13 @@ function renderLossStock(){
       '<div class="lbl">เหตุผล</div><select class="inp" style="font-size:13px;margin-bottom:4px" onchange="D.losses['+ri+'].reason=this.value;renderLossStock()">'+lrOpts(l.reason)+'</select>'+
       (l.reason==='อื่นๆ'?'<input class="inp" placeholder="ระบุเหตุผล..." value="'+esc(l.reasonOther||'')+'" oninput="D.losses['+ri+'].reasonOther=this.value" style="margin-bottom:4px">':'')+
       '<div class="lbl">โน้ต</div><input class="inp" placeholder="รายละเอียด..." value="'+esc(l.note||'')+'" oninput="D.losses['+ri+'].note=this.value" style="margin-bottom:8px">'+
+      '<div class="field"><div class="lbl">พนักงาน</div>'+
+      '<select class="inp" style="font-size:13px" onchange="D.losses['+ri+'].staff=this.value;if(this.value!==\'อื่นๆ\')D.losses['+ri+'].staffOther=\'\';renderLossStock()">'+
+        '<option value="">เลือกพนักงาน</option>'+
+        ['ฟ้าใส','ตุ้กตา','ภัทร','ฟ้าดล','อิงฟ้า','อื่นๆ'].map(function(ss){return '<option value="'+ss+'"'+(l.staff===ss?' selected':'')+'>'+ss+'</option>';}).join('')+
+      '</select>'+
+      (l.staff==='อื่นๆ'?'<input class="inp" style="margin-top:4px" placeholder="ชื่อพนักงาน..." value="'+esc(l.staffOther||'')+'" oninput="D.losses['+ri+'].staffOther=this.value">':'')+
+      '</div>'+
       '<button onclick="lockLoss('+ri+')" style="width:100%;padding:10px;background:#D4537E;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">💾 บันทึกและหักสต็อก</button>'+
     '</div>';
   }).join('');
@@ -1114,6 +1124,7 @@ function renderLossOther(){
         '</div>'+
         '<div style="font-size:13px;font-weight:500">'+esc(l.name)+'</div>'+
         '<div style="font-size:12px;color:#888;margin-top:4px">จำนวน: '+l.qty+' ชิ้น · '+esc(rt)+(l.note?' · '+esc(l.note):'')+'</div>'+
+        (l.staff?'<div style="font-size:11px;color:#7b3fa0;margin-top:3px">👤 '+(l.staff==='อื่นๆ'?(l.staffOther||'อื่นๆ'):l.staff)+'</div>':'')+
       '</div>';
     }
     return '<div class="loss-card">'+
@@ -1125,12 +1136,26 @@ function renderLossOther(){
       '<div class="lbl">เหตุผล</div><select class="inp" style="font-size:13px;margin-bottom:4px" onchange="D.losses['+ri+'].reason=this.value;renderLossOther()">'+lrOpts(l.reason)+'</select>'+
       (l.reason==='อื่นๆ'?'<input class="inp" placeholder="ระบุเหตุผล..." value="'+esc(l.reasonOther||'')+'" oninput="D.losses['+ri+'].reasonOther=this.value" style="margin-bottom:4px">':'')+
       '<div class="lbl">โน้ต</div><input class="inp" placeholder="รายละเอียด..." value="'+esc(l.note||'')+'" oninput="D.losses['+ri+'].note=this.value" style="margin-bottom:8px">'+
+      '<div class="field"><div class="lbl">พนักงาน</div>'+
+      '<select class="inp" style="font-size:13px" onchange="D.losses['+ri+'].staff=this.value;if(this.value!==\'อื่นๆ\')D.losses['+ri+'].staffOther=\'\';renderLossStock()">'+
+        '<option value="">เลือกพนักงาน</option>'+
+        ['ฟ้าใส','ตุ้กตา','ภัทร','ฟ้าดล','อิงฟ้า','อื่นๆ'].map(function(ss){return '<option value="'+ss+'"'+(l.staff===ss?' selected':'')+'>'+ss+'</option>';}).join('')+
+      '</select>'+
+      (l.staff==='อื่นๆ'?'<input class="inp" style="margin-top:4px" placeholder="ชื่อพนักงาน..." value="'+esc(l.staffOther||'')+'" oninput="D.losses['+ri+'].staffOther=this.value">':'')+
+      '</div>'+
+      '<div class="field"><div class="lbl">พนักงาน</div>'+
+      '<select class="inp" style="font-size:13px" onchange="D.losses['+ri+'].staff=this.value;if(this.value!==\'อื่นๆ\')D.losses['+ri+'].staffOther=\'\';renderLossOther()">'+
+        '<option value="">เลือกพนักงาน</option>'+
+        ['ฟ้าใส','ตุ้กตา','ภัทร','ฟ้าดล','อิงฟ้า','อื่นๆ'].map(function(ss){return '<option value="'+ss+'"'+(l.staff===ss?' selected':'')+'>'+ss+'</option>';}).join('')+
+      '</select>'+
+      (l.staff==='อื่นๆ'?'<input class="inp" style="margin-top:4px" placeholder="ชื่อพนักงาน..." value="'+esc(l.staffOther||'')+'" oninput="D.losses['+ri+'].staffOther=this.value">':'')+
+      '</div>'+
       '<button onclick="lockLoss('+ri+')" style="width:100%;padding:10px;background:#D4537E;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">💾 บันทึกและหักสต็อก</button>'+
     '</div>';
   }).join('');
 }
-function addLossStock(){D.losses.push({type:'stock',name:'',qty:0,reason:'สินค้าเสียหาย',reasonOther:'',note:''});renderLossStock();}
-function addLossOther(){D.losses.push({type:'other',name:'',qty:0,reason:'สินค้าเสียหาย',reasonOther:'',note:''});renderLossOther();}
+function addLossStock(){D.losses.push({type:'stock',name:'',qty:0,reason:'สินค้าเสียหาย',reasonOther:'',note:'',staff:'',staffOther:''});renderLossStock();}
+function addLossOther(){D.losses.push({type:'other',name:'',qty:0,reason:'สินค้าเสียหาย',reasonOther:'',note:'',staff:'',staffOther:''});renderLossOther();}
 function delLoss(i){
   var l=D.losses[i];
   var today=D.date;
@@ -1168,7 +1193,9 @@ function renderVoids(){
           '<div><div style="font-size:14px;font-weight:600;color:#993556">บิล '+esc(v.billNo||'-')+' <span style="font-size:10px;background:#f0f0f0;color:#888;padding:2px 8px;border-radius:20px">🔒 บันทึกแล้ว</span></div>'+
           '<div style="font-size:12px;color:#888;margin-top:4px">'+esc(v.cancelType==='all'?'ยกเลิกทั้งบิล':'ยกเลิกบางรายการ')+' · ยอด '+fmt(v.cancelAmt)+'</div>'+
           '<div style="font-size:12px;color:#888">สาเหตุ: '+esc(rt)+(v.note?' · '+esc(v.note):'')+'</div>'+
-          '<div style="font-size:12px;color:#888">'+refundTxt+'</div></div>'+
+          '<div style="font-size:12px;color:#888">'+refundTxt+'</div>'+
+          (v.staff?'<div style="font-size:11px;color:#7b3fa0;margin-top:3px">👤 '+(v.staff==='อื่นๆ'?(v.staffOther||'อื่นๆ'):v.staff)+'</div>':'')+
+          '</div>'+
           (canDelete?'<button onclick="delVoid('+i+')" style="background:none;border:none;color:#ccc;font-size:22px;cursor:pointer">×</button>':'<span style="font-size:11px;color:#ccc">ลบไม่ได้</span>')+
         '</div>'+
       '</div>';
@@ -1197,6 +1224,13 @@ function renderVoids(){
         (v.refundMethod==='transfer'?'<div class="row2"><div class="field"><div class="lbl">ชื่อบัญชี</div><input class="inp" value="'+esc(v.refundName||'')+'" oninput="D.voids['+i+'].refundName=this.value"></div><div class="field"><div class="lbl">เลขบัญชี</div><input class="inp" type="tel" value="'+esc(v.refundAccNo||'')+'" oninput="D.voids['+i+'].refundAccNo=this.value"></div></div>':'')+
         (v.refundMethod==='cash'?'<div class="field"><div class="lbl">รูปถ่ายบิล</div><button class="photo-btn" onclick="triggerPhoto('+i+')">📷 '+(v.refundPhoto?'เปลี่ยนรูป':'ถ่ายรูปบิล')+'</button>'+(v.refundPhoto?'<div class="photo-preview"><img src="'+v.refundPhoto+'" alt="บิล"><button class="photo-del" onclick="delPhoto('+i+')" aria-label="ลบ">×</button></div>':'')+'</div>':'')+
       '</div>':'')+
+      '<div class="field"><div class="lbl">พนักงาน</div>'+
+      '<select class="inp" style="font-size:13px" onchange="D.voids['+i+'].staff=this.value;if(this.value!==\'อื่นๆ\')D.voids['+i+'].staffOther=\'\';renderVoids()">'+
+        '<option value="">เลือกพนักงาน</option>'+
+        ['ฟ้าใส','ตุ้กตา','ภัทร','ฟ้าดล','อิงฟ้า','อื่นๆ'].map(function(ss){return '<option value="'+ss+'"'+(v.staff===ss?' selected':'')+'>'+ss+'</option>';}).join('')+
+      '</select>'+
+      (v.staff==='อื่นๆ'?'<input class="inp" style="margin-top:4px" placeholder="ชื่อพนักงาน..." value="'+esc(v.staffOther||'')+'" oninput="D.voids['+i+'].staffOther=this.value">':'')+
+      '</div>'+
       '<button onclick="lockVoid('+i+')" style="width:100%;padding:12px;background:#D4537E;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">💾 บันทึกและหักสต็อก</button>'+
     '</div>';
     return html;
@@ -1217,7 +1251,7 @@ function lockVoid(i){
   D.voids[i].date=D.date;
   saveAll(true);renderVoids();
 }
-function addVoid(){D.voids.push({billNo:'',cancelType:'all',cancelAmt:0,reason:'',reasonOther:'',note:'',refund:'no',refundMethod:'cash',refundAmt:0,refundName:'',refundAccNo:'',refundPhoto:''});renderVoids();}
+function addVoid(){D.voids.push({billNo:'',cancelType:'all',cancelAmt:0,reason:'',reasonOther:'',note:'',staff:'',staffOther:'',refund:'no',refundMethod:'cash',refundAmt:0,refundName:'',refundAccNo:'',refundPhoto:''});renderVoids();}
 function delVoid(i){
   var v=D.voids[i];
   var today=D.date;
@@ -1299,7 +1333,7 @@ function sendEmail(){
     if(btn){btn.textContent='❌ EmailJS ไม่พร้อม';btn.disabled=false;}
     alert('EmailJS ไม่พร้อม กรุณาตรวจสอบการเชื่อมต่อ');return;
   }
-  emailjs.send('service_4bxrsxd','template_v7fhcgc',{
+  emailjs.send('service_4bxrsxd','template_wh0ueph',{
     date:fmtDate(D.date),
     report_text:reportText,
     name:'ALICE CAFE',
@@ -1386,7 +1420,7 @@ function addReturn(){
   var sessionNo=todaySessions.length+1;
   var items=[];
   for(var i=0;i<10;i++)items.push({name:'',qty:0});
-  D.returns.push({date:today,sessionNo:sessionNo,locked:false,items:items});
+  D.returns.push({date:today,sessionNo:sessionNo,locked:false,staff:'',staffOther:'',items:items});
   renderReturns();
 }
 
