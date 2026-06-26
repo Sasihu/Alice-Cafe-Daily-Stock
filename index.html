@@ -353,13 +353,21 @@ function showSync(msg,c){const b=document.getElementById('sync-badge');if(b){b.t
 function hideSync(){setTimeout(()=>{const b=document.getElementById('sync-badge');if(b)b.classList.remove('show');},2000);}
 
 function saveAll(silent){
-  collectForm();
-  const snap=JSON.parse(JSON.stringify(D));
-  snap.savedAt=new Date().toISOString();
-  if(typeof db!=='undefined'){
-    db.ref('daily/'+D.date).set(snap).then(()=>{if(!silent){showSync('✓ บันทึกแล้ว');hideSync();}}).catch(()=>showSync('⚠️ บันทึกไม่สำเร็จ','rgba(255,80,80,.4)'));
+  try{
+    collectForm();
+    var snap=JSON.parse(JSON.stringify(D));
+    snap.savedAt=new Date().toISOString();
+    if(typeof db!=='undefined'){
+      db.ref('daily/'+D.date).set(snap)
+        .then(function(){if(!silent){showSync('✓ บันทึกแล้ว');hideSync();} })
+        .catch(function(e){showSync('⚠️ บันทึกไม่สำเร็จ','rgba(255,80,80,.4)');console.error(e);});
+    }
+    localStorage.setItem('alice_backup',JSON.stringify(snap));
+    if(!silent){showSync('✓ บันทึกแล้ว');hideSync();}
+  }catch(e){
+    console.error('saveAll error:',e);
+    alert('เกิดข้อผิดพลาด: '+e.message);
   }
-  localStorage.setItem('alice_backup',JSON.stringify(snap));
 }
 
 function applySnap(saved){
@@ -464,7 +472,7 @@ function renderAll(){
   var td=document.getElementById('top-date');
   if(td)td.textContent=fmtDate(D.date);
   // render ทุก section ที่โหลดข้อมูล
-  if(document.getElementById('cash-rows'))renderCash();
+  renderCash();
   if(document.getElementById('shift-rows'))renderShift();
 }
 
@@ -830,32 +838,63 @@ function renderCash(){
 }
 function updCash(d,v){
   D.cash.bills[d]=n(v);
-  calcGrand();
-}
-function calcGrand(){
-  // อ่านค่าแบงค์จาก DOM โดยตรง
-  var cash=0;
-  DENOMS.forEach(function(d){
-    var inp=document.getElementById('bill-'+d);
-    var qty=inp?n(inp.value):n(D.cash.bills[d]||0);
-    cash+=qty*d;
-    var ct=document.getElementById('ct-'+d);
-    if(ct)ct.textContent=qty>0?fmt(qty*d):'—';
-  });
+  // อัปเดต ct-d ทันที
+  var val=n(v);
+  var ct=document.getElementById('ct-'+d);
+  if(ct)ct.textContent=val>0?fmt(val*d):'—';
+  // รวม cash จาก D.cash.bills ทั้งหมด
+  var cashSum=0;
+  DENOMS.forEach(function(dd){cashSum+=n(D.cash.bills[dd]||0)*dd;});
+  // อัปเดต cash-grand ทันที
+  var cg=document.getElementById('cash-grand');if(cg)cg.textContent=fmt(cashSum);
+  var sc=document.getElementById('sum-cash');if(sc)sc.textContent=fmt(cashSum);
+  // อัปเดต grand total
   var ep=document.getElementById('edc-pos');
   var ec=document.getElementById('edc-credit');
   var qa=document.getElementById('qr-amt');
-  var edcPos=ep?n(ep.value):(D.cash.edcPos||0);
-  var edcCredit=ec?n(ec.value):(D.cash.edcCredit||0);
-  var qr=qa?n(qa.value):(D.cash.qrAmt||0);
-  var edc=edcPos+edcCredit;
+  var edc=n(ep?ep.value:0)+n(ec?ec.value:0);
+  var qr=n(qa?qa.value:0);
+  var gt=document.getElementById('grand-total');if(gt)gt.textContent=fmt(cashSum+edc+qr);
+  var se=document.getElementById('sum-edc');if(se)se.textContent=fmt(edc);
+  var sq=document.getElementById('sum-qr');if(sq)sq.textContent=fmt(qr);
+  var eg=document.getElementById('edc-grand');if(eg)eg.textContent=fmt(edc);
+  var qg=document.getElementById('qr-grand');if(qg)qg.textContent=fmt(qr);
+}
+function calcGrand(){
+  // sync D.cash.bills จาก DOM ก่อน (ถ้าหาเจอ)
+  DENOMS.forEach(function(d){
+    var inp=document.getElementById('bill-'+d);
+    if(inp)D.cash.bills[d]=n(inp.value);
+  });
+  var ep=document.getElementById('edc-pos');if(ep)D.cash.edcPos=n(ep.value);
+  var ec=document.getElementById('edc-credit');if(ec)D.cash.edcCredit=n(ec.value);
+  var qa=document.getElementById('qr-amt');if(qa)D.cash.qrAmt=n(qa.value);
+  // คำนวณจาก D.cash เสมอ
+  var cash=cashTotal();
+  var edc=(D.cash.edcPos||0)+(D.cash.edcCredit||0);
+  var qr=D.cash.qrAmt||0;
   var grand=cash+edc+qr;
+  // อัปเดต ct- labels
+  DENOMS.forEach(function(d){
+    var qty=n(D.cash.bills[d]||0);
+    var ct=document.getElementById('ct-'+d);
+    if(ct)ct.textContent=qty>0?fmt(qty*d):'—';
+  });
   function upd(id,v){var el=document.getElementById(id);if(el)el.textContent=fmt(v);}
   upd('cash-grand',cash);upd('edc-grand',edc);upd('qr-grand',qr);
   upd('sum-cash',cash);upd('sum-edc',edc);upd('sum-qr',qr);upd('grand-total',grand);
 }
 
 function closeShift(){
+  try{
+  // sync ค่าจาก DOM ทั้งหมดก่อนปิดรอบ
+  DENOMS.forEach(function(d){
+    var inp=document.getElementById('bill-'+d);
+    if(inp)D.cash.bills[d]=n(inp.value);
+  });
+  var ep=document.getElementById('edc-pos');if(ep)D.cash.edcPos=n(ep.value);
+  var ec=document.getElementById('edc-credit');if(ec)D.cash.edcCredit=n(ec.value);
+  var qa=document.getElementById('qr-amt');if(qa)D.cash.qrAmt=n(qa.value);
   collectForm();
   var cash=cashTotal();
   var edcPos=D.cash.edcPos||0;var edcCredit=D.cash.edcCredit||0;var edc=edcPos+edcCredit;
@@ -868,6 +907,7 @@ function closeShift(){
     delivered:D.preorders.filter(function(p){return p.delivered&&p.deliveredDate===today;}),
     voids:D.voids,shift:D.shift};
   saveAll(true);goPage(10);
+  }catch(e){console.error('closeShift error:',e);alert('เกิดข้อผิดพลาด: '+e.message);}
 }
 
 function renderCloseRpt(){
@@ -1054,6 +1094,39 @@ function lockLoss(ri){
   renderStock();
 }
 
+function renderLossOther(){
+  var el=document.getElementById('loss-other-list');if(!el)return;
+  var items=D.losses.filter(function(l){return l.type==='other';});
+  if(!items.length){el.innerHTML='<div style="text-align:center;padding:20px;color:#aaa;font-size:13px">ยังไม่มีรายการ</div>';return;}
+  var today=D.date;
+  el.innerHTML=items.map(function(l,ii){
+    var ri=D.losses.indexOf(l);
+    var isLocked=l.locked===true;
+    var canDelete=!l.date||l.date===today;
+    if(isLocked){
+      var rt=l.reason==='อื่นๆ'?(l.reasonOther||'อื่นๆ'):l.reason;
+      return '<div class="loss-card" style="background:#f9f9f9;border-color:#ddd">'+
+        '<div style="display:flex;justify-content:space-between;margin-bottom:8px">'+
+          '<div style="font-size:13px;font-weight:500;color:#993556">รายการ '+(ii+1)+' <span style="font-size:10px;background:#f0f0f0;color:#888;padding:2px 8px;border-radius:20px">🔒 บันทึกแล้ว</span></div>'+
+          (canDelete?'<button onclick="delLoss('+ri+')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer">×</button>':'<span style="font-size:11px;color:#ccc">ลบไม่ได้</span>')+
+        '</div>'+
+        '<div style="font-size:13px;font-weight:500">'+esc(l.name)+'</div>'+
+        '<div style="font-size:12px;color:#888;margin-top:4px">จำนวน: '+l.qty+' ชิ้น · '+esc(rt)+(l.note?' · '+esc(l.note):'')+'</div>'+
+      '</div>';
+    }
+    return '<div class="loss-card">'+
+      '<div style="display:flex;justify-content:space-between;margin-bottom:8px"><div style="font-size:13px;font-weight:500;color:#993556">รายการ '+(ii+1)+'</div><button onclick="delLoss('+ri+')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer">×</button></div>'+
+      '<div class="row2" style="margin-bottom:6px">'+
+        '<div><div class="lbl">ชื่อเมนู</div><input class="inp" value="'+esc(l.name)+'" placeholder="พิมชื่อ..." oninput="D.losses['+ri+'].name=this.value"></div>'+
+        '<div><div class="lbl">จำนวน</div><input class="inp inp-r" type="number" min="0" inputmode="numeric" value="'+(l.qty||'')+'" placeholder="0" oninput="D.losses['+ri+'].qty=n(this.value)"></div>'+
+      '</div>'+
+      '<div class="lbl">เหตุผล</div><select class="inp" style="font-size:13px;margin-bottom:4px" onchange="D.losses['+ri+'].reason=this.value;renderLossOther()">'+lrOpts(l.reason)+'</select>'+
+      (l.reason==='อื่นๆ'?'<input class="inp" placeholder="ระบุเหตุผล..." value="'+esc(l.reasonOther||'')+'" oninput="D.losses['+ri+'].reasonOther=this.value" style="margin-bottom:4px">':'')+
+      '<div class="lbl">โน้ต</div><input class="inp" placeholder="รายละเอียด..." value="'+esc(l.note||'')+'" oninput="D.losses['+ri+'].note=this.value" style="margin-bottom:8px">'+
+      '<button onclick="lockLoss('+ri+')" style="width:100%;padding:10px;background:#D4537E;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">💾 บันทึกและหักสต็อก</button>'+
+    '</div>';
+  }).join('');
+}
 function addLossStock(){D.losses.push({type:'stock',name:'',qty:0,reason:'สินค้าเสียหาย',reasonOther:'',note:''});renderLossStock();}
 function addLossOther(){D.losses.push({type:'other',name:'',qty:0,reason:'สินค้าเสียหาย',reasonOther:'',note:''});renderLossOther();}
 function delLoss(i){
@@ -1338,7 +1411,9 @@ function delReturn(ri){
   saveAll(true);
 }
 
-function exportXLSX(){function exportXLSX(){
+
+
+function exportXLSX(){
   if(typeof XLSX==='undefined'){alert('กำลังโหลด... ลองใหม่');return;}
   collectForm();var wb=XLSX.utils.book_new();var ds=fmtDate(D.date);
   var sr=[['รายงานสต้อก — ALICE CAFE'],['วันที่: '+ds],[],['รายการ','ยกยอด','รับ(ช)','รับ(บ)','คงเหลือ','ใช้จริง','ยอดระบบ','ส่วนต่าง','เหตุผล']];
@@ -1347,8 +1422,7 @@ function exportXLSX(){function exportXLSX(){
   XLSX.utils.book_append_sheet(wb,ws1,'สต้อก');
   var pr=[['Pre-order — ALICE CAFE'],['วันที่: '+ds],[],['เลขบิล','ลูกค้า','เบอร์','วันนัดรับ','เวลา','รายการ','สถานะ','ส่งมอบโดย']];
   D.preorders.forEach(function(p){var items=p.items.filter(function(it){return it.name&&it.qty>0;}).map(function(it){return it.name+'×'+it.qty;}).join(', ');pr.push([p.billNo||'',p.customer||'',p.phone||'',fmtShort(p.pickupDate),p.pickupTime||'',items,p.delivered?'ส่งมอบแล้ว':'รอรับ',p.deliveredBy||'']);});
-  var ws2=XLSX.utils.aoa_to_sheet(pr);ws2['!cols']=[{wch:10},{wch:16},{wch:14},{wch:12},{wch:8},{wch:30},{wch:12},{wch:16}];
-  XLSX.utils.book_append_sheet(wb,ws2,'Pre-order');
+  var ws2=XLSX.utils.aoa_to_sheet(pr);XLSX.utils.book_append_sheet(wb,ws2,'Pre-order');
   var cr=[['รายงานส่งมอบ — ALICE CAFE'],['วันที่: '+ds],[],['เลขบิล','ลูกค้า','รายการ','วันนัดรับ','วันส่งมอบ','ส่งมอบโดย','หมายเหตุ']];
   D.preorders.filter(function(p){return p.delivered;}).forEach(function(p){var items=p.items.filter(function(it){return it.name&&it.qty>0;}).map(function(it){return it.name+'×'+it.qty;}).join(', ');cr.push([p.billNo||'',p.customer||'',items,fmtShort(p.pickupDate),p.deliveredDate?fmtShort(p.deliveredDate):'-',p.deliveredBy||'',p.deliveryNote||'']);});
   var ws3=XLSX.utils.aoa_to_sheet(cr);XLSX.utils.book_append_sheet(wb,ws3,'เช็ครับ');
@@ -1358,19 +1432,20 @@ function exportXLSX(){function exportXLSX(){
   var vr=[['รายงานยกเลิกบิล — ALICE CAFE'],['วันที่: '+ds],[],['เลขบิล','ประเภท','ยอดยกเลิก','สาเหตุ','หมายเหตุ','คืนเงิน','จำนวนคืน']];
   D.voids.forEach(function(v){var rt=v.reason==='อื่นๆ'?(v.reasonOther||'อื่นๆ'):v.reason;vr.push([v.billNo||'',v.cancelType==='all'?'ทั้งบิล':'บางรายการ',v.cancelAmt,rt,v.note||'',v.refund==='yes'?'คืนเงิน':'ไม่คืน',v.refund==='yes'?v.refundAmt:'-']);});
   var ws5=XLSX.utils.aoa_to_sheet(vr);XLSX.utils.book_append_sheet(wb,ws5,'ยกเลิกบิล');
-  var edcPos=D.cash.edcPos||0;var edcCredit=D.cash.edcCredit||0;var cashAmt=cashTotal();var qrAmt=D.cash.qrAmt||0;
+  var cashAmt=cashTotal();var edcPos=D.cash.edcPos||0;var edcCredit=D.cash.edcCredit||0;var qrAmt=D.cash.qrAmt||0;
   var closeR=[['รายงานปิดรอบ — ALICE CAFE'],['วันที่: '+ds],[],['ช่องทาง','รายละเอียด','ยอด (฿)']];
-  closeR.push(['เงินสด','',cashAmt]);DENOMS.forEach(function(d){if(D.cash.bills[d])closeR.push(['',d.toLocaleString()+' บาท × '+(D.cash.bills[d]||0),(D.cash.bills[d]||0)*d]);});
-  closeR.push(['EDC1 — ยอด EDC POS','',edcPos]);closeR.push(['Credit Card',D.cash.edcNote||'',edcCredit]);closeR.push(['ใบปิดเครื่องรูด','',edcPos+edcCredit]);closeR.push(['QR Promptpay','',qrAmt]);closeR.push(['','ยอดรวม',cashAmt+edcPos+edcCredit+qrAmt]);
+  closeR.push(['เงินสด','',cashAmt]);
+  DENOMS.forEach(function(d){if(D.cash.bills[d])closeR.push(['',d.toLocaleString()+' บาท × '+(D.cash.bills[d]||0),(D.cash.bills[d]||0)*d]);});
+  closeR.push(['EDC1','',edcPos]);closeR.push(['Credit Card',D.cash.edcNote||'',edcCredit]);
+  closeR.push(['ใบปิดเครื่องรูด','',edcPos+edcCredit]);closeR.push(['QR Promptpay','',qrAmt]);
+  closeR.push(['','ยอดรวม',cashAmt+edcPos+edcCredit+qrAmt]);
   var ws6=XLSX.utils.aoa_to_sheet(closeR);XLSX.utils.book_append_sheet(wb,ws6,'ปิดรอบ-ส่งเงิน');
   var shR=[['รายงานกะ — ALICE CAFE'],['วันที่: '+ds],[],['พนักงาน','เวลาเข้า','ตำแหน่ง']];
   (D.shift.rows||[]).filter(function(r){return r.name;}).forEach(function(r){var nm=r.name==='อื่นๆ'?(r.nameOther||'อื่นๆ'):r.name;var ro=r.role==='อื่นๆ'?(r.roleOther||'อื่นๆ'):r.role;shR.push([nm,r.time||'',ro]);});
-  shR.push([]);shR.push(['ผู้กรอก',D.shift.reporter||'']);shR.push(['เวลา',D.shift.time||'']);shR.push(['หมายเหตุ',D.shift.note||'']);
+  shR.push([]);shR.push(['ผู้กรอก',D.shift.reporter||'']);shR.push(['หมายเหตุ',D.shift.note||'']);
   var ws7=XLSX.utils.aoa_to_sheet(shR);XLSX.utils.book_append_sheet(wb,ws7,'กะพนักงาน');
   XLSX.writeFile(wb,'ALICE_CAFE_รายงาน_'+D.date+'.xlsx');
 }
-}
-
 function exportCSV(){
   collectForm();
   var rows=[['วันที่','รายการ','ยกยอด','รับ(ช)','รับ(บ)','คงเหลือ','ใช้จริง','ยอดระบบ','ส่วนต่าง','เหตุผล']];
