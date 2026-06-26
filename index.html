@@ -998,9 +998,11 @@ function renderReport(){
     if(!days.length){el.innerHTML='<div style="text-align:center;padding:40px;color:#aaa;font-size:13px">ยังไม่มีข้อมูล</div>';return;}
     el.innerHTML=days.map(function(day,di){
       var stocks=day.stocks||[];
-      var ok=stocks.filter(function(s){return calcDiff(s)===0&&s.sys>0;}).length;
-      var ov=stocks.filter(function(s){return calcDiff(s)>0;}).length;
-      var sh=stocks.filter(function(s){return calcDiff(s)<0;}).length;
+      // คำนวณส่วนต่างแบบง่าย: sys - (open+recv+recvAft-close) สำหรับ report
+      function dayDiff(s){return (s.sys||0)-((s.open||0)+(s.recv||0)+(s.recvAft||0)-(s.close||0));}
+      var ok=stocks.filter(function(s){return dayDiff(s)===0&&(s.sys>0||s.close>0);}).length;
+      var ov=stocks.filter(function(s){return dayDiff(s)>0;}).length;
+      var sh=stocks.filter(function(s){return dayDiff(s)<0;}).length;
       var pd=(day.preorders||[]).filter(function(p){return p.delivered&&p.deliveredDate===day.date;});
       return '<div class="rpt-card" onclick="toggleRpt('+di+')">'+
         '<div style="display:flex;justify-content:space-between;align-items:center">'+
@@ -1011,8 +1013,8 @@ function renderReport(){
           '<div style="color:#888">▼</div>'+
         '</div>'+
         '<div class="rpt-detail" id="rd-'+di+'">'+
-          stocks.filter(function(s){return s.sys>0||s.close>0;}).map(function(s){
-            var d=calcDiff(s);
+          stocks.filter(function(s){return s.sys>0||s.close>0||s.recv>0||s.open>0;}).map(function(s){
+            var d=dayDiff(s);
             return '<div class="sum-row"><div>'+esc(s.name)+'</div><div style="font-size:12px;font-weight:600;color:'+(d===0?'#1a7a3a':d>0?'#0d4fa0':'#a32d2d')+'">'+(d===0?'ตรง':d>0?'+'+d:String(d))+'</div></div>';
           }).join('')+
         '</div>'+
@@ -1298,9 +1300,13 @@ function sendEmail(){
     alert('EmailJS ไม่พร้อม กรุณาตรวจสอบการเชื่อมต่อ');return;
   }
   emailjs.send('service_4bxrsxd','template_v7fhcgc',{
-    date:fmtDate(D.date),report_text:reportText,
-    name:'ALICE CAFE',message:reportText,
-    title:'รายงานปิดรอบ '+fmtDate(D.date),time:nowTime()
+    date:fmtDate(D.date),
+    report_text:reportText,
+    name:'ALICE CAFE',
+    message:reportText,
+    title:'รายงานปิดรอบ '+fmtDate(D.date),
+    time:nowTime(),
+    email:'acc.feung@gmail.com'
   }).then(function(){
     if(btn){btn.textContent='✅ ส่งอีเมลแล้ว!';btn.style.background='#1a7a3a';}
     alert('✅ ส่งรายงานไปที่ acc.feung@gmail.com แล้ว!');
