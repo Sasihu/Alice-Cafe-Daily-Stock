@@ -903,7 +903,7 @@ function closeShift(){
   D.closeReport={date:today,closeTime:nowTime(),reporter:D.shift.reporter,
     cash:cash,edcPos:edcPos,edcCredit:edcCredit,edc:edc,qr:qr,grand:grand,
     totalVoid:D.voids.reduce(function(a,v){return a+n(v.cancelAmt);},0),
-    stockDiffs:D.stocks.filter(function(s){return s.sys>0||s.close>0;}).map(function(s){return {name:s.name,actual:calcActual(s),sys:s.sys,diff:calcDiff(s),reason:s.reason};}),
+    stockDiffs:(D.stocks||[]).filter(function(s){return s.sys>0||s.close>0;}).map(function(s){return {name:s.name,actual:calcActual(s),sys:s.sys,diff:calcDiff(s),reason:s.reason};}),
     delivered:D.preorders.filter(function(p){return p.delivered&&p.deliveredDate===today;}),
     voids:D.voids,shift:D.shift};
   saveAll(true);goPage(10);
@@ -929,10 +929,10 @@ function renderCloseRpt(){
     '<div style="background:#fdf0f5;border-radius:10px;padding:10px 12px;border:1px solid #f0c0d0"><div style="font-size:10px;color:#993556;margin-bottom:3px">ยอดรวมทั้งวัน</div><div style="font-size:17px;font-weight:700;color:#D4537E">'+fmt(r.grand)+'</div></div>'+
   '</div>';
   if(r.totalVoid>0)html+='<div style="font-size:12px;color:#a32d2d;margin-bottom:10px">Void รวม: '+fmt(r.totalVoid)+'</div>';
-  if(r.shift&&r.shift.rows&&r.shift.rows.filter(function(row){return row.name;}).length){
+  if(r.shift&&((r.shift||{}).rows||[])&&((r.shift||{}).rows||[]).filter(function(row){return row.name;}).length){
     html+='<div style="font-size:11px;color:#aaa;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin:12px 0 8px">กะการทำงาน</div>'+
     '<div style="background:#f9f9f9;border-radius:10px;padding:8px 12px;margin-bottom:10px">';
-    r.shift.rows.filter(function(row){return row.name;}).forEach(function(row){
+    ((r.shift||{}).rows||[]).filter(function(row){return row.name;}).forEach(function(row){
       var nm=row.name==='อื่นๆ'?(row.nameOther||'อื่นๆ'):row.name;
       var ro=row.role==='อื่นๆ'?(row.roleOther||'อื่นๆ'):row.role;
       html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee">'+
@@ -942,7 +942,7 @@ function renderCloseRpt(){
     });
     html+='</div>';
   }
-  var diffItems=r.stockDiffs.filter(function(s){return s.diff!==0;});
+  var diffItems=(r.stockDiffs||[]).filter(function(s){return s.diff!==0;});
   if(diffItems.length){
     html+='<div style="font-size:11px;color:#aaa;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">สต้อก (มีส่วนต่าง)</div>'+
     '<div style="background:#f9f9f9;border-radius:10px;padding:8px 12px;margin-bottom:10px">';
@@ -953,10 +953,10 @@ function renderCloseRpt(){
     });
     html+='</div>';
   }
-  if(r.delivered&&r.delivered.length){
+  if(r.delivered&&(r.delivered||[]).length){
     html+='<div style="font-size:11px;color:#aaa;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">Pre-order ส่งมอบวันนี้</div>'+
     '<div style="background:#f9f9f9;border-radius:10px;padding:8px 12px;margin-bottom:10px">';
-    r.delivered.forEach(function(p){
+    (r.delivered||[]).forEach(function(p){
       var items=p.items.filter(function(it){return it.name&&it.qty>0;}).map(function(it){return it.name+'×'+it.qty;}).join(', ');
       var nc=p.deliveryNote&&p.deliveryNote.indexOf('ช้า')>=0?'#a32d2d':p.deliveryNote&&p.deliveryNote.indexOf('ก่อน')>=0?'#0d4fa0':'#1a7a3a';
       html+='<div style="padding:6px 0;border-bottom:1px solid #eee">'+
@@ -966,10 +966,10 @@ function renderCloseRpt(){
     });
     html+='</div>';
   }
-  if(r.voids&&r.voids.length){
+  if(r.voids&&(r.voids||[]).length){
     html+='<div style="font-size:11px;color:#aaa;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">ยกเลิกบิล</div>'+
     '<div style="background:#f9f9f9;border-radius:10px;padding:8px 12px;margin-bottom:10px">';
-    r.voids.forEach(function(v){
+    (r.voids||[]).forEach(function(v){
       var rt=v.reason==='อื่นๆ'?(v.reasonOther||'อื่นๆ'):v.reason;
       html+='<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee">'+
         '<div><div style="font-size:12px;font-weight:500">บิล '+esc(v.billNo||'-')+'</div>'+
